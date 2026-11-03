@@ -16,4 +16,4 @@ description: Enforce FinOps token discipline, Gemini 2.5 Flash routing, zero row
 
 3. **Compute & Token Budget Controls:**
    - Configure all Cloud Run deployments with `--min-instances=0 --max-instances=2 --cpu-throttling` so seasonal summer/Christmas transfer workloads incur **$0 idle compute cost** outside active HR windows.
-   - Enforce `max_output_tokens <= 1024` on operational endpoints and document token quota caps aligned with Gemini Enterprise pooled developer quota (`$15/seat/month`) and Apigee `LLMTokenQuota` (https://docs.cloud.google.com/apigee/docs/api-platform/reference/policies/llm-token-quota-policy).
+   - Enforce `max_output_tokens <= 1024` on operational endpoints and document token quota caps aligned with Gemini Enterprise pooled developer quota (`$15/seat/month`) and Vertex AI per-project token quota controls.

@@ -51,7 +51,49 @@ flowchart TB
 
 ---
 
-## 2. Component Design & Requirement Traceability Matrix (`FR-01`..`FR-08`, `NFR-01`..`NFR-05`)
+## 2. Deterministic Matching Engine & What-If Simulation Specification ([`src/matcher.py`](../../src/matcher.py) + [`sql/03_matching_and_simulation_procs.sql`](../../sql/03_matching_and_simulation_procs.sql))
+
+In accordance with **Rule 02** (ban on row-by-row LLM loops `>25` rows) and **Rule 03** (`100%` deterministic Python math for eligibility, `<18` working-time bounds, ranking, and `>=5.5hr` shift combinations), the matching engine is implemented as a pure, side-effect-free Python module ([`src/matcher.py`](../../src/matcher.py)) backed by BigQuery Gold tables and stored procedures ([`sql/03_matching_and_simulation_procs.sql`](../../sql/03_matching_and_simulation_procs.sql)).
+
+### 2.1 Core Data Structures & Complexity
+- **Input Cardinality:** $N = 1,050$ tokenized student rows (`next_student_transfer_gold.students_gold`) and $S = 1,093$ shift rows across $M = 470$ UK retail stores (`next_student_transfer_gold.store_shifts_gold`).
+- **Time & Space Complexity:** **`O(M log M + N log N)`** (`< 50ms` in-memory execution; `0` LLM tokens consumed during matching).
+- **Output Data Contract ([`MatchDecision`](../../src/matcher.py#L46-L61)):**
+  - `student_id`, `status` $\in$ `{MATCHED_COMPLETE, DATE_GAP_REVIEW, SMALL_CONTRACT_EXCEPTION, SM_EXTEND_SHIFT_REVIEW, UNMATCHED_WAITLIST, INELIGIBLE_ROUTED}`
+  - `matched_store_id`, `matched_store_name`, `matched_choice_rank` $\in \{1, 2, 3\}$, `allocated_shift_ids`, `allocated_weekly_hours`, `unique_slot_priority_used`
+  - `under18_Blocked_shifts` (audit trail of every shift rejected due to UK Young Worker law)
+  - `contended_out_history` (provenance list of higher-ranked `STU-XXXX` colleagues who claimed the last compatible shifts at Choice 1/2/3 stores)
+  - `regional_vacant_alternatives` (same-region stores with `>= 5.5h` remaining CMP-cleared, non-Green-Box capacity)
+
+### 2.2 The 7-Step Algorithmic Pipeline
+1. **Step 1 — Eligibility Gate ([`check_eligibility`](../../src/matcher.py#L81-L97)):**
+   - Checks `contract_type == "PERM"`, `star_rating in ("3", "4")`, `review_up_to_date == "true"`, and `do_not_make_leaver == "true"`.
+   - Fails closed to `INELIGIBLE_ROUTED` (`128` rows in baseline) with explicit human-readable rejection reasons.
+2. **Step 2 — Store Demand Priority Sort ([`run_matching_engine`](../../src/matcher.py#L228-L234)):**
+   - Aggregates Choice-1 demand per store across all `1,050` rows and sorts stores by `(-choice_1_count, store_id)`.
+3. **Step 3 — 3-Pass Cascade (`Choice 1 -> Choice 2 -> Choice 3`) & Fairness Tie-Breaking ([`src/matcher.py`](../../src/matcher.py#L244-L261)):**
+   - Iterates `pass_num` $\in \{1, 2, 3\}$. For each store in demand order, filters unplaced eligible applicants requesting that store in `choice_{pass_num}_store_id` and sorts by `(-int(star_rating), form_submitted_at ASC, student_id ASC)`.
+4. **Step 4 — Shift-Level Statutory & Governance Guards ([`is_shift_compatible_for_student`](../../src/matcher.py#L100-L133)):**
+   - Hard-blocks shifts where `is_green_box_protected == "true"` (unless `allow_green_box=True` in simulation) or `cmp_3day_cleared == "false"` (unless `include_un_cleared_cmp=True` in simulation).
+   - Verifies `shift.day_of_week_slot` $\in$ `student.available_day_slots` and `end_time <= student.preferred_latest_finish`.
+   - For `age_band == "UNDER_18"`, enforces UK Young Worker statutory rules ([GOV.UK](https://www.gov.uk/rest-breaks-work/young-workers)): `start_time >= "06:00"`, `end_time <= "22:00"`, `weekly_hours <= 8.0`, and `current_accumulated_hours + weekly_hours <= 40.0`.
+5. **Step 5 — Two-Subpass Allocation (`Unique-Availability-First` $\rightarrow$ `Standard Fill`) & Single-Store `>= 5.5hr` Lock ([`attempt_store_allocation`](../../src/matcher.py#L136-L185)):**
+   - **Subpass A (`only_unique_slot_Pass=True`):** Allocates students who have only **1** compatible day slot at that store first (`unique_slot_priority_used = True`).
+   - **Subpass B (`only_unique_slot_Pass=False`):** Greedily combines open shifts in the **same store** (never splitting across stores, max 1 shift per day slot, ordered by `(-weekly_hours, shift_id)`) until `total_hours >= min_hours_threshold` (`5.5h`).
+   - **Zero-Consumption Rollback:** If combined compatible shifts at that store sum to `< 5.5h`, zero shifts are consumed during Passes 1–3 so partial shifts remain available for other candidates.
+   - **21-Day Continuity Check:** Placed students with `transfer_gap_days > 21` are routed to `DATE_GAP_REVIEW` (`27` rows); those with `<= 21` days are routed to `MATCHED_COMPLETE` (`377` rows).
+6. **Step 6 — Contention Provenance & Post-Cascade Exception Triage ([`src/matcher.py`](../../src/matcher.py#L291-L398)):**
+   - Logs `contended_out_history` whenever a candidate had compatible shifts at a store at the start of the pass that were consumed by higher-ranked candidates during that pass.
+   - After Pass 3, inspects remaining `< 5.5h` open shifts across each unplaced student's Choice 1/2/3 stores to classify into:
+     - `SMALL_CONTRACT_EXCEPTION` (`81` rows): `4.0h–5.4h` shift where `prefer_small_4hr_contract == "true"` (e.g., `STU-0221`).
+     - `SM_EXTEND_SHIFT_REVIEW` (`64` rows): `4.0h–5.4h` shift where a Store Manager `+1.5h` extension reaches `5.5h` (e.g., `STU-0222`).
+     - `UNMATCHED_WAITLIST` (`373` rows): Attaches top 3 **Regional Cluster Vacant Stores** in the student's `region` with `>= 5.5h` open CMP-cleared capacity.
+7. **Step 7 — Dual-Engine What-If Simulation ([`run_what_if_simulation`](../../src/matcher.py#L440-L505) & BigQuery [`sp_simulate_store_capacity`](../../sql/03_matching_and_simulation_procs.sql#L26-L120)):**
+   - Executes side-by-side baseline vs. simulated runs in memory and in BigQuery (`CALL next_student_transfer_gold.sp_simulate_store_capacity(min_hours, include_green_box, region_filter)`) to quantify exact placement uplift (`+10` additional `4*` students placed in Manchester & Leeds when relaxing `5.5h` $\rightarrow$ `4.0h`) without mutating Gold tables.
+
+---
+
+## 3. Component Design & Requirement Traceability Matrix (`FR-01`..`FR-08`, `NFR-01`..`NFR-05`)
 
 | Req ID | Module / File | Technical Implementation Details |
 | :--- | :--- | :--- |
@@ -69,7 +111,7 @@ flowchart TB
 
 ---
 
-## 3. Accepted Demo Waivers vs. NEXT IT Production Target State (`next-ge-poc`)
+## 4. Accepted Demo Waivers vs. NEXT IT Production Target State (`next-ge-poc`)
 
 | Area | Showcase / PoC Implementation (`${GOOGLE_CLOUD_PROJECT}`) | NEXT IT Production Target State (`next-ge-poc`) |
 | :--- | :--- | :--- |

@@ -86,6 +86,49 @@ flowchart TB
 | :---: | :---: |
 | ![Persona Data Flow](diagrams/next_persona_data_flow.svg) | ![Governance Pipeline](diagrams/next_governance_pipeline.svg) |
 
+### 3.3 How the Deterministic Matching Engine Is Built ([`src/matcher.py`](src/matcher.py) + [`sql/03_matching_and_simulation_procs.sql`](sql/03_matching_and_simulation_procs.sql))
+
+To guarantee **100% statutory compliance**, **zero hallucinated shift allocations**, and **`$0.00` LLM token spend on bulk matching**, all matching and simulation logic is implemented in pure vectorized Python ([`src/matcher.py`](src/matcher.py) — `565` lines) paired with a BigQuery stored procedure ([`sql/03_matching_and_simulation_procs.sql`](sql/03_matching_and_simulation_procs.sql)). The engine executes a **7-step deterministic pipeline** in **`< 50ms` (`O(M log M + N log N)`)** across `1,050` students ($N$) and `1,093` shifts across `470` stores ($M$):
+
+```mermaid
+flowchart TD
+    In["Input Gold Tables (next_student_transfer_gold)<br/>• students_gold (N = 1,050) • store_shifts_gold (1,093 shifts, M = 470 stores)"] --> S1
+
+    subgraph S1["Step 1: Deterministic Eligibility Gate (check_eligibility)"]
+        E1{"contract_type == 'PERM'<br/>AND star_rating IN ('3','4')<br/>AND review_up_to_date == 'true'<br/>AND do_not_make_leaver == 'true'?"}
+        E1 -->|No (128 students)| Inelig["Status: INELIGIBLE_ROUTED<br/>(Exact rejection reasons logged)"]
+    end
+
+    E1 -->|Yes (922 eligible)| S2["Step 2: Store Demand Priority Sort — O(M log M)<br/>Count Choice-1 requests per store; sort stores by (-choice_1_count, store_id)<br/>High-demand flagship stores (STORE-001 Oxford St, STORE-012 Manchester) processed first"]
+
+    S2 --> S3["Step 3: 3-Pass Cascade (Pass p ∈ {1: Choice 1, 2: Choice 2, 3: Choice 3})<br/>Rank unplaced candidates for store s by (-int(star_rating), form_submitted_at ASC, student_id ASC)"]
+
+    S3 --> S4["Step 4: Shift-Level Hard Guards (is_shift_compatible_for_student)<br/>• Store Governance: is_green_box_protected == False AND cmp_3day_cleared == True<br/>• Slot Match: day_of_week_slot ∈ student.available_day_slots<br/>• UK UNDER_18 Statutory Law: start >= 06:00, end <= 22:00, shift <= 8.0h, week <= 40.0h"]
+
+    S4 --> S5A["Step 5A — Subpass 1: Unique-Availability-First (only_unique_slot_Pass=True)<br/>Students with ONLY 1 compatible day slot get priority claim before multi-day candidates"]
+    S5A --> S5B["Step 5B — Subpass 2: Standard Single-Store Greedy Fill (attempt_store_allocation)<br/>Combine shifts in SAME store (max 1 shift/day, sorted by -weekly_hours) until total_hours >= 5.5h"]
+
+    S5B --> Check55{"Combined single-store<br/>hours >= 5.5h?"}
+    Check55 -->|Yes| GapCheck{"transfer_gap_days > 21?"}
+    GapCheck -->|No (<=21d)| Matched["Status: MATCHED_COMPLETE (377)<br/>Consume shift_ids & lock placement"]
+    GapCheck -->|Yes (>21d)| DateGap["Status: DATE_GAP_REVIEW (27)<br/>Consume shift_ids & route to HR continuity queue"]
+    Check55 -->|No (<5.5h)| Rollback["Zero-Consumption Rollback:<br/>Release shifts back to store pool; advance student to next Pass (Choice 2 -> Choice 3)"]
+
+    Rollback --> S6["Step 6: Contention Provenance & Post-Cascade Exception Triage (for unplaced after Pass 3)<br/>• Record contended_out_history (exact higher-ranked STU-XXXX who claimed last shift)<br/>• Classify remaining <5.5h options into:<br/>  - SMALL_CONTRACT_EXCEPTION (81): 4.0–5.4h shift + prefer_small_4hr_contract == true<br/>  - SM_EXTEND_SHIFT_REVIEW (64): 4.0–5.4h shift extendable by +1.5h to reach 5.5h<br/>  - UNMATCHED_WAITLIST (373): Auto-compute Regional Cluster Vacant Store suggestions (>=5.5h open)"]
+```
+
+#### Step-by-Step Algorithmic Specification
+
+| Step | Function in [`src/matcher.py`](src/matcher.py) | Algorithmic Rule & Data Invariant | Baseline Output (`N = 1,050`) |
+| :--- | :--- | :--- | :--- |
+| **1. Eligibility Gate** | [`check_eligibility(student)`](src/matcher.py#L81-L97) | Evaluates 4 mandatory boolean gates: `contract_type == "PERM"`, `star_rating in ("3", "4")`, `review_up_to_date == "true"`, and `do_not_make_leaver == "true"`. Any failed condition routes immediately with explicit reason strings. | `922` Eligible<br>`128` `INELIGIBLE_ROUTED` |
+| **2. Store Demand Sort** | [`run_matching_engine()`](src/matcher.py#L228-L234) | Aggregates `choice_1_store_id` frequency across all `1,050` rows and sorts stores by `(-choice_1_count, store_id)` (`O(M log M)`), ensuring high-demand stores are allocated first. | `470` UK Stores ordered by Choice-1 demand |
+| **3. 3-Pass Cascade & Fairness Tie-Break** | [`run_matching_engine()`](src/matcher.py#L244-L261) | Outer loop iterates `pass_num` $\in \{1, 2, 3\}$ (`Choice 1` $\rightarrow$ `Choice 2` $\rightarrow$ `Choice 3`). Within each store, unplaced eligible applicants are sorted deterministically by `(-int(star_rating), form_submitted_at ASC, student_id ASC)` (`O(N log N)`). | Pass 1: `234` placed<br>Pass 2: `55` placed<br>Pass 3: `115` placed |
+| **4. Statutory & Governance Guards** | [`is_shift_compatible_for_student()`](src/matcher.py#L100-L133) | Rejects any shift where `is_green_box_protected == "true"` or `cmp_3day_cleared == "false"`. If `age_band == "UNDER_18"`, enforces UK Young Worker law ([GOV.UK](https://www.gov.uk/rest-breaks-work/young-workers)): `start_time >= "06:00"`, `end_time <= "22:00"`, `weekly_hours <= 8.0`, and cumulative `current_accumulated_hours + weekly_hours <= 40.0`. | `15` `<18` blocks enforced<br>`0` Green Box leaked<br>`0` un-cleared CMP leaked |
+| **5. Two-Subpass `>=5.5hr` Single-Store Lock** | [`attempt_store_allocation()`](src/matcher.py#L136-L185) | **Subpass A (`only_unique_slot_Pass=True`):** Allocates students who have only **1** compatible day slot first so multi-day candidates do not starve single-day colleagues.<br>**Subpass B (`only_unique_slot_Pass=False`):** Greedily combines open shifts in the **same store** (never splitting across stores, max 1 shift per `day_of_week_slot`, sorted by `(-weekly_hours, shift_id)`) until `total_hours >= 5.5`. If `< 5.5h`, performs a **Zero-Consumption Rollback** so partial shifts remain open for other candidates. | `377` `MATCHED_COMPLETE`<br>`27` `DATE_GAP_REVIEW` (`>21` day gap) |
+| **6. Contention & Exception Triage** | [`run_matching_engine()`](src/matcher.py#L291-L398) | Logs `contended_out_history` (identifying the exact higher-priority `STU-XXXX` who took the last shift at a store, e.g. `STU-0412` contended out by `4*` `STU-0108`). After Pass 3, inspects remaining `< 5.5h` shifts across Choice 1/2/3 to route unplaced students into `SMALL_CONTRACT_EXCEPTION`, `SM_EXTEND_SHIFT_REVIEW`, or `UNMATCHED_WAITLIST` (with automated **Regional Cluster Vacant Store** lookup in the same `region`). | `81` `SMALL_CONTRACT`<br>`64` `SM_EXTEND_SHIFT`<br>`373` `UNMATCHED_WAITLIST` |
+| **7. Dual-Engine What-If Simulation** | [`run_what_if_simulation()`](src/matcher.py#L440-L505) & [`sp_simulate_store_capacity`](sql/03_matching_and_simulation_procs.sql) | Re-runs the full matcher side-by-side against baseline with parameterized overrides (`min_hours_threshold`, `allow_green_box`, `include_un_cleared_cmp`, `region_filter`, `store_ids_filter`) without mutating Gold tables. | `+13` additional placements (`+10` `4*` students in Manchester & Leeds at `4.0h`) |
+
 ---
 
 ## 4. SWE Repository Structure (Scoping $\rightarrow$ Solution Design $\rightarrow$ Agent Code $\rightarrow$ Release)
