@@ -2,28 +2,28 @@
 
 ## 1. Architecture Overview & Design Principles (Phase 2 Medallion & Enterprise UX Architecture)
 
-The **NEXT Student Transfer Assistant** uses a **Two-App Segregated Cloud Run + Two-Dataset BigQuery Medallion + Dataplex Auto Data Quality + Multi-Agent ADK Architecture** deployed in `europe-west2` (London) on Google Cloud (`talent-management-513520` for CE showcase; `IT_HANDOVER_BUNDLE/` for NEXT IT promotion to `next-ge-poc`).
+The **NEXT Student Transfer Assistant** uses a **Two-App Segregated Cloud Run + Two-Dataset BigQuery Medallion + Dataplex Auto Data Quality + Multi-Agent ADK Architecture** deployed in `europe-west2` (London) on Google Cloud (`${GOOGLE_CLOUD_PROJECT}`; `IT_HANDOVER_BUNDLE/` for NEXT IT promotion to `next-ge-poc`).
 
 1. **Two-Dataset BigQuery Medallion Architecture (`europe-west2`, Zero Golden CSVs):**
-   - **Bronze Intake & DQ Quarantine (`talent-management-513520.next_student_transfer_staging`):**
+   - **Bronze Intake & DQ Quarantine (`${GOOGLE_CLOUD_PROJECT}.next_student_transfer_staging`):**
      - `portal_change_requests`: Append-only `INSERT`s from App 1 (`<200ms`) with denormalized flat columns (`request_id`, `submitted_at`, `actor_role`, `actor_id`, `target_table`, `record_id`, `age_band`, `choice_1`, `choice_2`, `choice_3`, `transfer_gap_days`, `shift_hours`, `preferred_latest_finish`, `was_green_box_protected`, `new_is_green_box_protected`, `cmp_3day_cleared`, `note`, `promotion_status` IN `PROMOTED` | `QUARANTINED` | `REJECTED_BY_HR` | `OVERRIDDEN_BY_HR`).
      - `change_audit_log`: Strictly append-only event log (never `DELETE` or `TRUNCATE`; resetting demo data appends a `DEMO_RESET` audit row).
      - `v_data_quality_warnings`: `0ms` real-time SQL view evaluating `DQ-01..DQ-06` across active `QUARANTINED` rows in `portal_change_requests`.
-   - **Trusted Gold & Matching (`talent-management-513520.next_student_transfer_gold`):**
+   - **Trusted Gold & Matching (`${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold`):**
      - `students_gold` (`1,050` tokenized students seeded via SQL), `store_shifts_gold` (`1,093` shifts across `470` UK stores seeded via SQL), `students_gold_baseline`, `store_shifts_gold_baseline`, `placements_staging`, `transfer_audit_log`, `outreach_email_log`, `v_eligible_shifts_sql`, and `sp_simulate_store_capacity`.
      - **Promotion & Quarantine Rule:** Valid App 1 edits (Scenario 1: `SM-019` clearing `SHF-9001..9003` 3-day CMP) promote into `next_student_transfer_gold.store_shifts_gold` (`promotion_status = 'PROMOTED'`). Invalid App 1 edits (`DQ-01..DQ-06`) remain quarantined in `portal_change_requests` (`promotion_status = 'QUARANTINED'`) until HR calls `resolve_quarantined_change(request_id, decision='REJECT' | 'OVERRIDE_PROMOTE', hr_reason, confirm=True)` — keeping `*_gold` clean at all times.
 2. **Real Dataplex Auto Data Quality (`next-student-transfer-dq-scan`) + `0ms` SQL View Together:**
-   - Provisioned `projects/talent-management-513520/locations/europe-west2/dataScans/next-student-transfer-dq-scan` targeting `next_student_transfer_staging.portal_change_requests` (`config/dataplex_dq_rules.yaml`).
+   - Provisioned `projects/${GOOGLE_CLOUD_PROJECT}/locations/europe-west2/dataScans/next-student-transfer-dq-scan` targeting `next_student_transfer_staging.portal_change_requests` (`config/dataplex_dq_rules.yaml`).
    - App 1 triggers `dataScans:run` asynchronously on every Scenario Button or manual save so real Dataplex scan jobs populate the GCP Console UI, while `dq_and_change_auditor_agent` queries `v_data_quality_warnings` (`0ms`) + latest completed `DataScan` job metadata so live demo turns never wait 30–60s for batch scan startup.
 3. **Two Strictly Segregated Cloud Run Services (`europe-west2`) + Custom Domain Global Load Balancer:**
-   - **Cloud Run App 1 (`next-portal-intake-app` — [`src/portal_server.py`](../../src/portal_server.py) + [`ui/portal_intake.html`](../../ui/portal_intake.html)):** Student (`STU-XXXX`) & Store Manager (`SM-XXX`) Self-Service Portal using the **Modern High-Street Retail Monochrome (`NEXT`)** design system (`Plus Jakarta Sans` + `JetBrains Mono` `.tabular`, `#F7F7F5` warm alabaster canvas, `#FFFFFF` workspace, `#111111` primary action, `4px` radius), header badge `[PHASE 2 SELF-SERVICE PORTAL PREVIEW — PHASE 1 COMPATIBLE WITH GOOGLE SHEETS]`, and a collapsible bottom-right Presenter Stage Dock (`DEMO_MODE=true`). Deployed with `--no-allow-unauthenticated` and fronted by a **Global External Application Load Balancer + Google-Managed SSL Certificate + Cloud IAP** at **`https://next-portal.yenchau.demo.altostrat.com/ui`** ([`scripts/setup_custom_domain_lb.sh`](../../scripts/setup_custom_domain_lb.sh)).
+   - **Cloud Run App 1 (`next-portal-intake-app` — [`src/portal_server.py`](../../src/portal_server.py) + [`ui/portal_intake.html`](../../ui/portal_intake.html)):** Student (`STU-XXXX`) & Store Manager (`SM-XXX`) Self-Service Portal using the **Modern High-Street Retail Monochrome (`NEXT`)** design system (`Plus Jakarta Sans` + `JetBrains Mono` `.tabular`, `#F7F7F5` warm alabaster canvas, `#FFFFFF` workspace, `#111111` primary action, `4px` radius), header badge `[PHASE 2 SELF-SERVICE PORTAL PREVIEW — PHASE 1 COMPATIBLE WITH GOOGLE SHEETS]`, and a collapsible bottom-right Presenter Stage Dock (`DEMO_MODE=true`). Deployed with `--no-allow-unauthenticated` and fronted by a **Global External Application Load Balancer + Google-Managed SSL Certificate + Cloud IAP** ([`scripts/setup_custom_domain_lb.sh`](../../scripts/setup_custom_domain_lb.sh)).
    - **Cloud Run App 2 (`next-student-transfer-agent` — [`src/server.py`](../../src/server.py) + [`src/agent.py`](../../src/agent.py)):** Pure Headless HR Multi-Agent A2A Backend (`POST /a2a/app`) registered onto **Gemini Enterprise (`gemini-enterprise-retail-app`)**, deployed with `--no-allow-unauthenticated --no-cpu-throttling --cpu-boost --min-instances=1 --max-instances=2` and protected by Regional `europe-west2` **Model Armor** (`before_model_callback`, `after_tool_callback`, `after_model_callback`).
 4. **3-Sub-Agent ADK Hierarchy + Gemini Enterprise Native `@Gmail` Connector Handoff:**
    - Root Coordinator (`next_hr_transfer_coordinator`) delegates across:
      1. `dq_and_change_auditor_agent` (`audit_recent_changes_and_dq_warnings`, `resolve_quarantined_change`, `revert_invalid_change`)
      2. `matcher_and_simulator_agent` (`run_batch_matching`, `explain_student_status`, `simulate_policy_change`, `rerun_batch2_cmp_shifts`)
      3. `hr_comms_and_intervention_agent` (`generate_and_send_comms_strategy`, `record_hr_exception_decision`)
-   - Stages tokenized outreach drafts in `next_student_transfer_gold.outreach_email_log` (`delivery_status = 'STAGED_FOR_GE_GMAIL'`) using regex-verified `+` alias addresses (`admin+stu-0412@yenchau.altostrat.com`, `admin+sm-012@yenchau.altostrat.com`) and outputs copy-clean `To / Subject / Body` blocks for a **2-turn native `@Gmail` Connector handoff** in Gemini Enterprise.
+   - Stages tokenized outreach drafts in `next_student_transfer_gold.outreach_email_log` (`delivery_status = 'STAGED_FOR_GE_GMAIL'`) using regex-verified `+` alias addresses (`hr-notifications+stu-0412@next-retail.example.com`, `hr-notifications+sm-012@next-retail.example.com`) and outputs copy-clean `To / Subject / Body` blocks for a **2-turn native `@Gmail` Connector handoff** in Gemini Enterprise.
 
 ```mermaid
 flowchart TB
@@ -45,7 +45,7 @@ flowchart TB
 
     subgraph GE["4. Gemini Enterprise (gemini-enterprise-retail-app)"]
         GEApp["HR Conversational Control Plane (/a2a/app A2A v0.3)<br/>A2A-Safe HITL (confirm: bool = False -> True)"] <--> Armor
-        GEApp --> GmailConn["Turn 2: Native @Gmail Connector Handoff<br/>Tokenized + Alias Routing (admin+stu-0412@ / admin+sm-012@)"]
+        GEApp --> GmailConn["Turn 2: Native @Gmail Connector Handoff<br/>Tokenized + Alias Routing (hr-notifications+stu-0412@)"]
     end
 ```
 
@@ -71,8 +71,8 @@ flowchart TB
 
 ## 3. Accepted Demo Waivers vs. NEXT IT Production Target State (`next-ge-poc`)
 
-| Area | Argolis Live Showcase Implementation (`talent-management-513520`) | NEXT IT Production Target State (`next-ge-poc`) |
+| Area | Showcase / PoC Implementation (`${GOOGLE_CLOUD_PROJECT}`) | NEXT IT Production Target State (`next-ge-poc`) |
 | :--- | :--- | :--- |
-| **1. Service Account Separation** | Single Argolis default compute service account (`537939007190-compute@developer.gserviceaccount.com`) used across App 1 and App 2 to avoid Org Policy SA key/creation blocks during rapid showcase provisioning. | Two dedicated least-privilege service accounts: `sa-portal-intake@next-ge-poc.iam.gserviceaccount.com` (write-only to `next_student_transfer_staging.portal_change_requests`, read-only on `*_gold`) and `sa-hr-agent@next-ge-poc.iam.gserviceaccount.com` (read/write on `next_student_transfer_staging` & `next_student_transfer_gold` + `roles/modelarmor.user`). |
+| **1. Service Account Separation** | Single project compute service account used across App 1 and App 2 during rapid PoC provisioning. | Two dedicated least-privilege service accounts: `sa-portal-intake@next-ge-poc.iam.gserviceaccount.com` (write-only to `next_student_transfer_staging.portal_change_requests`, read-only on `*_gold`) and `sa-hr-agent@next-ge-poc.iam.gserviceaccount.com` (read/write on `next_student_transfer_staging` & `next_student_transfer_gold` + `roles/modelarmor.user`). |
 | **2. Agent Runtime Hosting** | Cloud Run App 2 (`next-student-transfer-agent`, `europe-west2`) hosting the FastAPI `/a2a/app` A2A v0.3 endpoint with `--min-instances=1 --no-cpu-throttling --cpu-boost`. | Managed **Vertex AI Agent Engine (`europe-west2`, GA)** or private Cloud Run with VPC-SC perimeter and Workforce Identity Federation. |
-| **3. Self-Service Persona Switching** | Collapsible bottom-right Presenter Stage Dock (`DEMO_MODE=true`) allowing 1-key (`1`, `2`, `3`, `R`, `` ` ``) switching between `STU-0412`, `STU-0109`, `SM-019`, and `SM-012` behind Cloud Run native IAP (`user:admin@yenchau.altostrat.com`). | `DEMO_MODE=false` in production; colleague identity (`STU-XXXX` / `SM-XXX`) derived strictly from the signed IAP JWT assertion (`X-Goog-IAP-JWT-Assertion`) mapped to NEXT PingFederate / Entra ID SSO. |
+| **3. Self-Service Persona Switching** | Collapsible bottom-right Presenter Stage Dock (`DEMO_MODE=true`) allowing 1-key (`1`, `2`, `3`, `R`, `` ` ``) switching between `STU-0412`, `STU-0109`, `SM-019`, and `SM-012` behind Cloud IAP. | `DEMO_MODE=false` in production; colleague identity (`STU-XXXX` / `SM-XXX`) derived strictly from the signed IAP JWT assertion (`X-Goog-IAP-JWT-Assertion`) mapped to NEXT PingFederate / Entra ID SSO. |

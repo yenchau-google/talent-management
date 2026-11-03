@@ -26,7 +26,7 @@
         <mxCell id="cell_8" value="4. Tokenized Gold Datasets, Immutable Audit &amp; Continuous Evaluation" style="swimlane;fontStyle=1;horizontal=1;startSize=30;collapsible=1;rounded=1;fillColor=#fef7e0;strokeColor=#fde293;strokeWidth=1.5;fontColor=#202124;fontSize=14;shadow=1;" vertex="1" parent="cell_2">
           <mxGeometry x="22" y="530.8" width="1002.0000000000001" height="151.7" as="geometry" />
         </mxCell>
-        <mxCell id="cell_9" value="&lt;b&gt;[Users] HR Transfer Team&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Lee&#39;s Team (MVP Core)&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_3">
+        <mxCell id="cell_9" value="&lt;b&gt;[Users] HR Transfer Team&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Central HR Team (MVP Core)&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_3">
           <mxGeometry x="69.00000000000006" y="56.69999999999999" width="188" height="58" as="geometry" />
         </mxCell>
         <mxCell id="cell_10" value="&lt;b&gt;[VertexAI] Gemini Enterprise&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;@StudentTransfer App&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#1a73e8;strokeWidth=2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_3">

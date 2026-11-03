@@ -1,12 +1,12 @@
 """Live Google Cloud BigQuery Medallion Repository & Dataplex Data Quality Guardrail Engine.
 
 Two-Dataset Medallion Architecture (`europe-west2`):
-  1. Bronze / Quarantine (`<ARGOLIS_PROJECT_ID>.next_student_transfer_staging`):
+  1. Bronze / Quarantine (`<GOOGLE_CLOUD_PROJECT>.next_student_transfer_staging`):
       - `portal_change_requests` (append-only self-service requests with flat denormalized DQ columns)
       - `change_audit_log` (strictly append-only event log; never DELETE/TRUNCATE)
       - `v_data_quality_warnings` (`0ms` real-time SQL view evaluating `DQ-01..DQ-06` on `QUARANTINED` requests)
       - Dataplex Auto Data Quality Scan (`next-student-transfer-dq-scan`) triggered asynchronously
-  2. Trusted Gold (`<ARGOLIS_PROJECT_ID>.next_student_transfer_gold`):
+  2. Trusted Gold (`<GOOGLE_CLOUD_PROJECT>.next_student_transfer_gold`):
       - `students_gold` & `students_gold_baseline` (`1,050` tokenized students)
       - `store_shifts_gold` & `store_shifts_gold_baseline` (`1,093` shifts across `470` UK stores)
       - `placements_staging`
@@ -56,9 +56,9 @@ def build_tokenized_email_address(token: str) -> str:
         raise ValueError(
             f"Invalid colleague token '{token}': must strictly match ^STU-\\d{{4}}$ or ^SM-\\d{{3}}$."
         )
-    base_email = os.environ.get("DEMO_EMAIL_BASE", "admin@yenchau.altostrat.com").strip()
+    base_email = os.environ.get("DEMO_EMAIL_BASE", "hr-notifications@next-retail.example.com").strip()
     if "@" not in base_email:
-        base_email = "admin@yenchau.altostrat.com"
+        base_email = "hr-notifications@next-retail.example.com"
     local_part, domain = base_email.split("@", 1)
     return f"{local_part}+{clean.lower()}@{domain}"
 
@@ -73,7 +73,7 @@ class BigQueryRepository:
         gold_dataset_id: Optional[str] = None,
         location: Optional[str] = None,
     ) -> None:
-        self.project_id = project_id or os.environ.get("ARGOLIS_PROJECT_ID", "talent-management-513520")
+        self.project_id = project_id or os.environ.get("GOOGLE_CLOUD_PROJECT", "next-student-transfer-prod")
         self.staging_dataset_id = staging_dataset_id or os.environ.get(
             "BQ_STAGING_DATASET_ID", "next_student_transfer_staging"
         )

@@ -3,7 +3,7 @@
 
 Enforces Rule 01 (Zero Raw UK PII) and Rule 03 / SAIF (Regional Model Armor across all boundaries):
   - Regional endpoint: https://modelarmor.europe-west2.rep.googleapis.com (<256 KB cap, 800ms timeout)
-  - Template: projects/{ARGOLIS_PROJECT_ID}/locations/{MODEL_ARMOR_LOCATION}/templates/{MODEL_ARMOR_TEMPLATE_ID}
+  - Template: projects/{GOOGLE_CLOUD_PROJECT}/locations/{MODEL_ARMOR_LOCATION}/templates/{MODEL_ARMOR_TEMPLATE_ID}
   - Wired across ADK callbacks:
       * before_model_callback (user prompt inspection)
       * after_tool_callback   (scans BigQuery rows from App 1 portal_change_requests)
@@ -33,7 +33,7 @@ ARMOR_TIMEOUT_SECONDS = 0.8        # 800ms strict latency cap
 UK_PHONE_RE = re.compile(r"(?:\+44\s?7\d{3}|\b07\d{3})\s?\d{3}\s?\d{3}\b")
 EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 ALLOWED_TOKENIZED_EMAIL_RE = re.compile(
-    r"^[A-Za-z0-9._-]+(?:\+(?:stu-\d{4}|sm-\d{3}))?@yenchau\.altostrat\.com$",
+    r"^[A-Za-z0-9._-]+\+(?:stu-\d{4}|sm-\d{3})@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$",
     re.I,
 )
 UK_NI_RE = re.compile(r"\b[A-CEGHJ-PR-TW-Z]{2}\s?\d{2}\s?\d{2}\s?\d{2}\s?[A-D]\b", re.I)
@@ -104,11 +104,7 @@ class ModelArmorGuard:
         api_endpoint: str | None = None,
         mode: str | None = None,
     ) -> None:
-        self.project_id = (
-            project_id
-            or os.getenv("ARGOLIS_PROJECT_ID")
-            or os.getenv("GOOGLE_CLOUD_PROJECT", "talent-management-513520")
-        )
+        self.project_id = project_id or os.getenv("GOOGLE_CLOUD_PROJECT", "next-student-transfer-prod")
         self.location = location or os.getenv("MODEL_ARMOR_LOCATION", "europe-west2")
         self.template_id = template_id or os.getenv("MODEL_ARMOR_TEMPLATE_ID", "next-student-transfer-armor")
         self.api_endpoint = (

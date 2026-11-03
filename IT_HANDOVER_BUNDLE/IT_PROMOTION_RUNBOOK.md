@@ -8,7 +8,7 @@
 
 ## 1. Zero Shadow IT Architecture Overview
 
-This bundle enables **NEXT PLC IT** (`roles/discoveryengine.admin` and `roles/run.admin`) to promote the verified Student Transfer Assistant from the Google Cloud CE showcase environment (`talent-management-513520`) into NEXT's corporate Google Cloud project (`next-ge-poc`) in under 15 minutes:
+This bundle enables **NEXT PLC Enterprise IT** (`roles/discoveryengine.admin` and `roles/run.admin`) to promote the verified Student Transfer Assistant into NEXT's corporate Google Cloud project (`next-ge-poc`) in under 15 minutes:
 
 1. **Private Serverless Runtime (`europe-west2`):** Deployed to Cloud Run (`--no-allow-unauthenticated`, `--min-instances=0`, `--max-instances=2`, `--cpu-throttling`).
 2. **Regional Model Armor (`europe-west2`):** Enforces `https://modelarmor.europe-west2.rep.googleapis.com` (`dataResidencyCompliant: true`) on every user prompt, tool output, and model response.
@@ -38,9 +38,8 @@ Ensure the promoting principal holds:
    ```
 2. **Run Pre-Flight Gate & Deterministic Unit Tests (Mandatory 100% Bar):**
    ```bash
-   uv run python .agents/skills/pii-and-policy-gate/scripts/scan_dataset.py data/students_gold.csv data/store_shifts_gold.csv
-   PYTHONPATH=. uv run --with pytest pytest -v tests/test_matcher.py
-   PYTHONPATH=. uv run python scripts/run_eval_scorecard.py
+   pytest -v tests/test_matcher.py
+   python3 scripts/run_eval_scorecard.py
    ```
 3. **Execute Automated Promotion Script:**
    ```bash
@@ -50,13 +49,12 @@ Ensure the promoting principal holds:
 
 ---
 
-## 4. Custom Domain & Shared Cloud DNS Architecture (Argolis Showcase vs NEXT IT Promotion)
+## 4. Custom Domain, Shared Cloud DNS & Cloud IAP Architecture
 
-- **Argolis CE Showcase (`yenchau.altostrat.com` / `talent-management-513520`):**
-  - Because Argolis delegates `yenchau.demo.altostrat.com.` to a single Cloud DNS zone across the entire organization (`185542423572`), we re-use the already-live delegated zone **`dns-cloudrun`** in project **`gitlab-432318`** (Shard **`d`**: `ns-cloud-d1..d4.googledomains.com.`, `DNSSEC = off`).
-  - All Load Balancer, Google-managed SSL certificate, IAP, and Cloud Run resources remain inside `talent-management-513520`, while the public `A` record (`next-portal.yenchau.demo.altostrat.com.`) is registered in `gitlab-432318` (`dns-cloudrun`) to avoid breaking existing `creative.` and `retail.` demo records or waiting for Argolis portal re-delegation.
-- **NEXT PLC Corporate Promotion (`next-ge-poc`):**
-  - Point NEXT's corporate DNS / internal load balancer to the Regional External/Internal Application Load Balancer in `next-ge-poc` (`europe-west2`) fronting the serverless NEG for `next-portal-intake-app` with Cloud IAP enabled.
+- **Global External Application Load Balancer + Cloud IAP (`scripts/setup_custom_domain_lb.sh`):**
+  - Fronts Cloud Run App 1 (`next-portal-intake-app`) with a Google-Managed SSL certificate, serverless NEG (`next-portal-neg`), and Cloud IAP (`roles/iap.httpsResourceAccessor`).
+  - Supports cross-project Cloud DNS zones via `DNS_PROJECT_ID` and `DNS_ZONE_NAME` (`DNSSEC=off` recommended when using Google-Managed SSL certificates).
+  - Automatically disables direct Cloud Run IAP (`--no-iap`) **before** re-binding `roles/run.invoker` to `service-${PROJECT_NUMBER}@gcp-sa-iap.iam.gserviceaccount.com` so Load Balancer IAP never triggers `Error code 9` (`403`).
 
 ---
 

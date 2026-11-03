@@ -1,45 +1,45 @@
 -- =============================================================================
 -- 02_gold_schema_and_seed.sql
 -- NEXT PLC Student Transfer Lighthouse — Trusted Gold Dataset & Seed
--- Dataset: talent-management-513520.next_student_transfer_gold (europe-west2)
+-- Dataset: ${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold (europe-west2)
 -- =============================================================================
 
 -- 1. Reset source dataset to clean baseline first before copying into _gold
-UPDATE `talent-management-513520.next_student_transfer.students_gold`
+UPDATE `${GOOGLE_CLOUD_PROJECT}.next_student_transfer.students_gold`
 SET choice_2_store_id = 'STORE-043', updated_by_token = 'SYSTEM-SEED'
 WHERE student_id = 'STU-0412';
 
-UPDATE `talent-management-513520.next_student_transfer.students_gold`
+UPDATE `${GOOGLE_CLOUD_PROJECT}.next_student_transfer.students_gold`
 SET preferred_latest_finish = '21:30', updated_by_token = 'SYSTEM-SEED'
 WHERE student_id = 'STU-0109';
 
-UPDATE `talent-management-513520.next_student_transfer.store_shifts_gold`
+UPDATE `${GOOGLE_CLOUD_PROJECT}.next_student_transfer.store_shifts_gold`
 SET weekly_hours = 4.0, updated_by_token = 'SYSTEM-SEED'
 WHERE shift_id = 'SHF-1028';
 
-UPDATE `talent-management-513520.next_student_transfer.store_shifts_gold`
+UPDATE `${GOOGLE_CLOUD_PROJECT}.next_student_transfer.store_shifts_gold`
 SET is_green_box_protected = TRUE, updated_by_token = 'SYSTEM-SEED'
 WHERE shift_id = 'SHF-1003';
 
-UPDATE `talent-management-513520.next_student_transfer.store_shifts_gold`
+UPDATE `${GOOGLE_CLOUD_PROJECT}.next_student_transfer.store_shifts_gold`
 SET cmp_3day_cleared = FALSE, updated_by_token = 'SYSTEM-SEED'
 WHERE shift_id IN ('SHF-9001', 'SHF-9002', 'SHF-9003');
 
 -- 2. Seed immutable baseline snapshots + live Gold tables (1,050 students & 1,093 shifts)
-CREATE OR REPLACE TABLE `talent-management-513520.next_student_transfer_gold.students_gold_baseline` AS
-SELECT * FROM `talent-management-513520.next_student_transfer.students_gold`;
+CREATE OR REPLACE TABLE `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.students_gold_baseline` AS
+SELECT * FROM `${GOOGLE_CLOUD_PROJECT}.next_student_transfer.students_gold`;
 
-CREATE OR REPLACE TABLE `talent-management-513520.next_student_transfer_gold.store_shifts_gold_baseline` AS
-SELECT * FROM `talent-management-513520.next_student_transfer.store_shifts_gold`;
+CREATE OR REPLACE TABLE `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.store_shifts_gold_baseline` AS
+SELECT * FROM `${GOOGLE_CLOUD_PROJECT}.next_student_transfer.store_shifts_gold`;
 
-CREATE OR REPLACE TABLE `talent-management-513520.next_student_transfer_gold.students_gold` AS
-SELECT * FROM `talent-management-513520.next_student_transfer_gold.students_gold_baseline`;
+CREATE OR REPLACE TABLE `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.students_gold` AS
+SELECT * FROM `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.students_gold_baseline`;
 
-CREATE OR REPLACE TABLE `talent-management-513520.next_student_transfer_gold.store_shifts_gold` AS
-SELECT * FROM `talent-management-513520.next_student_transfer_gold.store_shifts_gold_baseline`;
+CREATE OR REPLACE TABLE `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.store_shifts_gold` AS
+SELECT * FROM `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.store_shifts_gold_baseline`;
 
 -- 3. Gold Governance & Outbox Tables
-CREATE TABLE IF NOT EXISTS `talent-management-513520.next_student_transfer_gold.placements_staging` (
+CREATE TABLE IF NOT EXISTS `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.placements_staging` (
   batch_id STRING NOT NULL,
   staged_at STRING NOT NULL,
   nep_staging_mode STRING NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `talent-management-513520.next_student_transfer_gold.
   hitl_stage STRING NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS `talent-management-513520.next_student_transfer_gold.transfer_audit_log` (
+CREATE TABLE IF NOT EXISTS `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.transfer_audit_log` (
   audit_id STRING NOT NULL,
   timestamp STRING NOT NULL,
   student_id STRING NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `talent-management-513520.next_student_transfer_gold.
   downstream_action STRING NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS `talent-management-513520.next_student_transfer_gold.outreach_email_log` (
+CREATE TABLE IF NOT EXISTS `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.outreach_email_log` (
   email_id STRING NOT NULL,
   sent_at STRING NOT NULL,
   recipient_persona STRING NOT NULL,

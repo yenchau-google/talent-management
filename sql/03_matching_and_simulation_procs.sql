@@ -1,12 +1,12 @@
 -- =============================================================================
 -- 03_matching_and_simulation_procs.sql
 -- NEXT PLC Student Transfer Lighthouse — BigQuery SQL Matching & What-If Procs
--- Dataset: talent-management-513520.next_student_transfer_gold (europe-west2)
+-- Dataset: ${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold (europe-west2)
 -- =============================================================================
 
 -- View: Eligible Shifts strictly enforcing Green Box (is_green_box_protected = FALSE),
 -- 3-Day CMP clearance (cmp_3day_cleared = TRUE), and >= 4.0h contract bounds.
-CREATE OR REPLACE VIEW `talent-management-513520.next_student_transfer_gold.v_eligible_shifts_sql` AS
+CREATE OR REPLACE VIEW `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.v_eligible_shifts_sql` AS
 SELECT
   shift_id,
   store_id,
@@ -22,14 +22,14 @@ SELECT
   cmp_3day_cleared,
   -- UK Young Worker (UNDER_18) statutory shift eligibility flag (06:00 <= start, end <= 22:00, <= 8.0h/day)
   (start_time >= '06:00' AND end_time <= '22:00' AND weekly_hours <= 8.0) AS is_under18_safe
-FROM `talent-management-513520.next_student_transfer_gold.store_shifts_gold`
+FROM `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.store_shifts_gold`
 WHERE is_green_box_protected = FALSE
   AND cmp_3day_cleared = TRUE
   AND weekly_hours >= 4.0
   AND weekly_hours <= 12.0;
 
 -- Stored Procedure: Parameterized BigQuery SQL What-If Simulator & Store Capacity Summary
-CREATE OR REPLACE PROCEDURE `talent-management-513520.next_student_transfer_gold.sp_simulate_store_capacity`(
+CREATE OR REPLACE PROCEDURE `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.sp_simulate_store_capacity`(
   IN min_hours_for_4star FLOAT64,
   IN city_filter_1 STRING,
   IN city_filter_2 STRING
@@ -45,12 +45,12 @@ BEGIN
     COUNTIF(sh.weekly_hours >= min_hours_for_4star AND sh.weekly_hours < 5.5) AS unlocked_small_contract_shifts,
     (
       SELECT COUNT(1)
-      FROM `talent-management-513520.next_student_transfer_gold.students_gold` st
+      FROM `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.students_gold` st
       WHERE st.contract_type = 'PERM'
         AND st.star_rating IN (3, 4)
         AND st.choice_1_store_id = sh.store_id
     ) AS choice_1_eligible_demand
-  FROM `talent-management-513520.next_student_transfer_gold.v_eligible_shifts_sql` sh
+  FROM `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_gold.v_eligible_shifts_sql` sh
   WHERE LOWER(sh.store_name) LIKE CONCAT('%', LOWER(city_filter_1), '%')
      OR LOWER(sh.store_name) LIKE CONCAT('%', LOWER(city_filter_2), '%')
   GROUP BY sh.store_id

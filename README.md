@@ -12,7 +12,7 @@ The **NEXT Student Transfer Assistant** automates and governs the seasonal unive
 It separates **Colleague & Store Manager Self-Service Intake** from **HR Multi-Agent Orchestration** using two strictly segregated Cloud Run services and a two-dataset BigQuery Medallion architecture in `europe-west2` (London):
 
 1. **Cloud Run App 1 — Colleague & Store Manager Self-Service Portal ([`src/portal_server.py`](src/portal_server.py) + [`ui/portal_intake.html`](ui/portal_intake.html)):**
-   - Fronted by a **Global External Application Load Balancer + Google-Managed SSL + Cloud IAP** (`https://next-portal.yenchau.demo.altostrat.com/ui`).
+   - Fronted by a **Global External Application Load Balancer + Google-Managed SSL + Cloud IAP** (`https://${PORTAL_CUSTOM_DOMAIN}/ui`).
    - Allows Students (`STU-XXXX`) to submit Choice 1/2/3 store transfer preferences and Store Managers (`SM-XXX`) to publish shifts and clear the 3-day internal Contract Marketplace (`CMP`) window.
    - Writes append-only rows to BigQuery Bronze (`next_student_transfer_staging.portal_change_requests`), triggers **Dataplex Auto Data Quality (`next-student-transfer-dq-scan`)**, promotes valid updates to Gold (`next_student_transfer_gold`), and quarantines policy violations (`DQ-01..DQ-06`) for HR review.
 2. **Cloud Run App 2 — Headless HR Multi-Agent A2A Backend ([`src/server.py`](src/server.py) + [`src/agent.py`](src/agent.py)):**
@@ -27,7 +27,7 @@ It separates **Colleague & Store Manager Self-Service Intake** from **HR Multi-A
 ## 2. Why We Built It (Business Case & Architectural Rationale)
 
 ### 2.1 The Business Bottleneck
-Every university holiday window (Summer, Christmas, Easter), NEXT HR (`Lee`'s team) processes `1,000+` student transfer requests across `470+` UK stores via manual spreadsheets. Each placement must simultaneously satisfy:
+Every university holiday window (Summer, Christmas, Easter), NEXT Central HR processes `1,000+` student transfer requests across `470+` UK stores via manual spreadsheets. Each placement must simultaneously satisfy:
 - **Eligibility Invariants:** `3*` or `4*` permanent (`PERM`) colleagues with up-to-date reviews and `do_not_make_leaver = true`.
 - **Store Demand & Fairness Ranking:** Stores ordered by Choice-1 demand descending; candidates ranked by `star_rating DESC`, then `form_submitted_at ASC`.
 - **Operational & Statutory Hard Blocks:**
@@ -55,8 +55,8 @@ Every university holiday window (Summer, Christmas, Easter), NEXT HR (`Lee`'s te
 ```mermaid
 flowchart TB
     subgraph Edge["1. Global Edge & Identity Boundary"]
-        LB["Global External Application Load Balancer<br/>https://next-portal.yenchau.demo.altostrat.com/ui<br/>Google-Managed SSL + Cloud IAP"]
-        GE["Gemini Enterprise (gemini-enterprise-retail-app)<br/>Workspace SSO + Native @Gmail Connector"]
+        LB["Global External Application Load Balancer<br/>https://${PORTAL_CUSTOM_DOMAIN}/ui<br/>Google-Managed SSL + Cloud IAP"]
+        GE["Gemini Enterprise (Discovery Engine)<br/>Workspace SSO + Native @Gmail Connector"]
     end
 
     subgraph App1["2. Cloud Run App 1: Self-Service Intake Portal (europe-west2)"]
@@ -96,7 +96,6 @@ The repository is organized chronologically around the **4-Phase Agent Engineeri
 talent-management/
 ├── README.md                                      # Solution overview, business rationale, architecture & quickstart
 ├── AGENTS.md                                      # Antigravity workspace manifest & always-on governance rules summary
-├── ANTIGRAVITY_ARGOLIS_PLAYBOOK.md                # End-to-end live demo & workshop runbook
 ├── .env.example                                   # Parameterized environment template (zero hardcoded project IDs/secrets)
 │
 ├── .agents/                                       # AI Coding & Runtime Governance Layer
@@ -172,7 +171,7 @@ talent-management/
 | **Phase 1: Scoping & Policy Gate** | Translate messy HR process notes ([`inputs/next_student_transfer_raw_notes.md`](inputs/next_student_transfer_raw_notes.md)) into structured `FR-*`/`NFR-*` requirements, a 3-Persona RACI (`Student`, `Store Manager`, `HR`), tokenized `STU-XXXX` / `SM-XXX` schemas, and block raw UK PII before build. | • [`docs/01-scoping/01-scoping-requirements.md`](docs/01-scoping/01-scoping-requirements.md)<br>• [`.agents/skills/pii-and-policy-gate/scripts/scan_dataset.py`](.agents/skills/pii-and-policy-gate/scripts/scan_dataset.py)<br>• [`data/dirty_form_export.csv`](data/dirty_form_export.csv)<br>• [`config/dataplex_dq_rules.yaml`](config/dataplex_dq_rules.yaml) |
 | **Phase 2: Solution Design & Governance Reviews** | Architect the 2-App Cloud Run + 2-Dataset BigQuery Medallion + 3-Sub-Agent ADK design, and review against the Google Cloud Well-Architected Framework (`WAF`), FinOps (`$15/seat/mo` quota), and Secure AI Framework (`SAIF`). | • [`docs/02-solution-design/02-solution-design.md`](docs/02-solution-design/02-solution-design.md)<br>• [`docs/02-solution-design/03-waf-review.md`](docs/02-solution-design/03-waf-review.md)<br>• [`docs/02-solution-design/04-saif-review.md`](docs/02-solution-design/04-saif-review.md)<br>• [`sql/`](sql/) |
 | **Phase 3: Agent Implementation & Evaluation** | Implement the deterministic `O(N log N)` Python matcher, Regional `europe-west2` Model Armor guardrails, ADK Multi-Agent coordinator, Self-Service Portal UI, and verify `100%` pass on `pytest` + the 50-case Golden Eval Set. | • [`src/matcher.py`](src/matcher.py), [`src/agent.py`](src/agent.py), [`src/model_armor_guard.py`](src/model_armor_guard.py)<br>• [`src/portal_server.py`](src/portal_server.py), [`ui/portal_intake.html`](ui/portal_intake.html)<br>• [`tests/test_matcher.py`](tests/test_matcher.py), [`tests/eval_golden_set.json`](tests/eval_golden_set.json)<br>• [`scripts/run_eval_scorecard.py`](scripts/run_eval_scorecard.py) |
-| **Phase 4: Enterprise IT Release & Handover** | Deploy private Cloud Run services (`--no-allow-unauthenticated`), configure Custom Domain Global Load Balancer + Cloud IAP, register the A2A agent in Gemini Enterprise, and package `IT_HANDOVER_BUNDLE/`. | • [`scripts/setup_custom_domain_lb.sh`](scripts/setup_custom_domain_lb.sh)<br>• [`IT_HANDOVER_BUNDLE/IT_PROMOTION_RUNBOOK.md`](IT_HANDOVER_BUNDLE/IT_PROMOTION_RUNBOOK.md)<br>• [`IT_HANDOVER_BUNDLE/deploy_to_customer_ge.sh`](IT_HANDOVER_BUNDLE/deploy_to_customer_ge.sh)<br>• [`ANTIGRAVITY_ARGOLIS_PLAYBOOK.md`](ANTIGRAVITY_ARGOLIS_PLAYBOOK.md) |
+| **Phase 4: Enterprise IT Release & Handover** | Deploy private Cloud Run services (`--no-allow-unauthenticated`), configure Custom Domain Global Load Balancer + Cloud IAP, register the A2A agent in Gemini Enterprise, and package `IT_HANDOVER_BUNDLE/`. | • [`scripts/setup_custom_domain_lb.sh`](scripts/setup_custom_domain_lb.sh)<br>• [`IT_HANDOVER_BUNDLE/IT_PROMOTION_RUNBOOK.md`](IT_HANDOVER_BUNDLE/IT_PROMOTION_RUNBOOK.md)<br>• [`IT_HANDOVER_BUNDLE/FINOPS_SUMMARY.md`](IT_HANDOVER_BUNDLE/FINOPS_SUMMARY.md)<br>• [`IT_HANDOVER_BUNDLE/SECURITY_AND_EVAL_ATTESTATION.md`](IT_HANDOVER_BUNDLE/SECURITY_AND_EVAL_ATTESTATION.md)<br>• [`IT_HANDOVER_BUNDLE/deploy_to_customer_ge.sh`](IT_HANDOVER_BUNDLE/deploy_to_customer_ge.sh) |
 
 ---
 
@@ -181,7 +180,7 @@ talent-management/
 ### 6.1 Configure Environment
 ```bash
 cp .env.example .env
-# Edit .env to set ARGOLIS_PROJECT_ID, GEMINI_ENTERPRISE_APP_ID, and MODEL_ARMOR_TEMPLATE_ID
+# Edit .env to set GOOGLE_CLOUD_PROJECT, GEMINI_ENTERPRISE_APP_ID, and MODEL_ARMOR_TEMPLATE_ID
 ```
 
 ### 6.2 Run Pre-Flight PII & Policy Gate (Phase 1 Gate)
@@ -212,3 +211,27 @@ python3 scripts/provision_bq_and_dataplex.py
 # 2. Provision Global External Application Load Balancer + Google-Managed SSL + Cloud IAP for App 1:
 ./scripts/setup_custom_domain_lb.sh
 ```
+
+---
+
+## 7. Interactive End-to-End Demo Scenarios (`App 1 Portal` $\rightarrow$ `Dataplex AutoDQ` $\rightarrow$ `Gemini Enterprise`)
+
+### Scenario 1: Data Quality Quarantine & Two-Turn HITL Resolution
+1. **Student Self-Service (`App 1 Portal`):** Select `STU-0412` and submit a Choice-1 transfer request to `STORE-005 (Manchester Arndale)` — a **Green Box protected** store (`is_green_box_protected = TRUE`).
+2. **Quarantine Gate:** The submission is written to `next_student_transfer_staging.portal_change_requests` with status `QUARANTINED_DQ_FAILURE` (`DQ-01: GREEN_BOX_VIOLATION`) and triggers the Dataplex AutoDQ scan (`next-student-transfer-dq-scan`), leaving `students_gold` untouched.
+3. **HR Audit (`Gemini Enterprise`):** Ask `@NEXT Student Transfer Assistant`:
+   - *"Audit all recent portal submissions and data quality warnings."*
+   - *"Reject the quarantined Green Box request from STU-0412 and notify the student why STORE-005 is blocked."* (Executes the 2-turn `confirm=False -> confirm=True` A2A HITL gate).
+
+### Scenario 2: Store Manager Batch-2 CMP Release & Targeted Re-Match
+1. **Store Manager Self-Service (`App 1 Portal`):** Switch to **Store Manager Roster (`SM-019`, `STORE-019 Leeds Trinity`)** and click **Clear 3-Day CMP** on `SHF-019-SAT-60` (`6.0h`) and `SHF-019-SUN-40` (`4.0h`).
+2. **Gold Promotion:** Valid shift updates promote to `next_student_transfer_gold.store_shifts_gold` (`PROMOTED`).
+3. **HR Re-Match & Gmail Draft Handoff (`Gemini Enterprise`):**
+   - *"Re-run matching for STORE-019 now that SM-019 cleared the 3-day CMP window, and stage transfer confirmation email drafts for newly matched students."*
+   - Follow up with `@Gmail` to create the Gmail draft using the exact `To`, `Subject`, and `Body` returned by `stage_outreach_email_drafts`.
+
+### Scenario 3: Policy Contention Explanation & BigQuery What-If Simulation
+1. **Contention Explainability (`Gemini Enterprise`):**
+   - *"Why didn't STU-0412 get matched to STORE-001 (London Oxford St), and what are our options for STU-0006 who only has 4.0h available?"*
+2. **BigQuery Stored Procedure Simulation (`sp_simulate_store_capacity`):**
+   - *"Run a What-If simulation: if we lower the minimum contract threshold from 5.5 hours to 4.0 hours and lift Green Box restrictions in London North, how many additional students get placed?"*

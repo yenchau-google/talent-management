@@ -157,7 +157,7 @@ def test_hero_stu_0109_under18_night_shift_block_and_safe_match(engine_result: d
     assert "FRI 18:00-23:00" in blocked_windows
 
 
-def test_bryony_three_exception_queues_hero_cases(engine_result: dict) -> None:
+def test_hr_three_exception_queues_hero_cases(engine_result: dict) -> None:
     """FR-06: Verify STU-0221 (SMALL_CONTRACT_EXCEPTION), STU-0222 (SM_EXTEND_SHIFT_REVIEW), and STU-0305 (DATE_GAP_REVIEW)."""
     p = engine_result["placements"]
     assert p["STU-0221"]["status"] == "SMALL_CONTRACT_EXCEPTION"
@@ -225,7 +225,7 @@ def test_hitl_override_and_nep_staging_export(tmp_path: Path, engine_result: dic
         student_id="STU-0221",
         human_action="APPROVE_EXCEPTION",
         override_reason="4_STAR_OPT_IN_4HR_APPROVED",
-        reviewer_note="Approved by Bryony in Stage 1 review",
+        reviewer_note="Approved by HR Specialist in Stage 1 review",
         agent_status="SMALL_CONTRACT_EXCEPTION",
         audit_path=temp_log,
     )
@@ -322,11 +322,11 @@ def test_portal_demo_scenarios_and_hr_dq_audit_and_comms() -> None:
         # 4. Verify A2A-safe HITL confirm=False preview before confirm=True execution
         first_warning = audit["active_dq_warnings"][0]
         req_id = first_warning["request_id"]
-        preview = resolve_quarantined_change(req_id, decision="REJECT", hr_reason="HR-BRYONY", confirm=False)
+        preview = resolve_quarantined_change(req_id, decision="REJECT", hr_reason="HR-SPECIALIST", confirm=False)
         assert preview["resolution_result"]["confirm_required"] is True
         assert preview["resolution_result"]["status"] == "CONFIRMATION_REQUIRED"
 
-        executed = resolve_quarantined_change(req_id, decision="REJECT", hr_reason="HR-BRYONY", confirm=True)
+        executed = resolve_quarantined_change(req_id, decision="REJECT", hr_reason="HR-SPECIALIST", confirm=True)
         assert executed["resolution_result"]["status"] == "REVERTED"
 
         # 5. Verify A2A-safe HITL confirm=False on record_hr_exception_decision

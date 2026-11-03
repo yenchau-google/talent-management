@@ -1,6 +1,6 @@
 # Dataplex Auto Data Quality Rules Specification
-# Target Table: projects/talent-management-513520/datasets/next_student_transfer_staging/tables/portal_change_requests
-# Scan ID: projects/talent-management-513520/locations/europe-west2/dataScans/next-student-transfer-dq-scan
+# Target Table: projects/${GOOGLE_CLOUD_PROJECT}/datasets/next_student_transfer_staging/tables/portal_change_requests
+# Scan ID: projects/${GOOGLE_CLOUD_PROJECT}/locations/europe-west2/dataScans/next-student-transfer-dq-scan
 
 rules:
   - name: dq01-distinct-store-choices

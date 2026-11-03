@@ -1,10 +1,10 @@
 -- =============================================================================
 -- 01_staging_schema.sql
 -- NEXT PLC Student Transfer Lighthouse — Bronze Intake & DQ Quarantine Dataset
--- Dataset: talent-management-513520.next_student_transfer_staging (europe-west2)
+-- Dataset: ${GOOGLE_CLOUD_PROJECT}.next_student_transfer_staging (europe-west2)
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS `talent-management-513520.next_student_transfer_staging.portal_change_requests` (
+CREATE TABLE IF NOT EXISTS `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_staging.portal_change_requests` (
   request_id STRING NOT NULL,
   submitted_at STRING NOT NULL,
   actor_role STRING NOT NULL,          -- STUDENT | STORE_MANAGER
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `talent-management-513520.next_student_transfer_stagi
   hr_reason STRING
 );
 
-CREATE TABLE IF NOT EXISTS `talent-management-513520.next_student_transfer_staging.change_audit_log` (
+CREATE TABLE IF NOT EXISTS `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_staging.change_audit_log` (
   change_id STRING NOT NULL,
   request_id STRING,
   changed_at STRING NOT NULL,
@@ -48,10 +48,10 @@ CREATE TABLE IF NOT EXISTS `talent-management-513520.next_student_transfer_stagi
 );
 
 -- Real-time 0ms SQL View evaluating DQ-01..DQ-06 directly on active portal_change_requests
-CREATE OR REPLACE VIEW `talent-management-513520.next_student_transfer_staging.v_data_quality_warnings` AS
+CREATE OR REPLACE VIEW `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_staging.v_data_quality_warnings` AS
 WITH active_requests AS (
   SELECT *
-  FROM `talent-management-513520.next_student_transfer_staging.portal_change_requests`
+  FROM `${GOOGLE_CLOUD_PROJECT}.next_student_transfer_staging.portal_change_requests`
   WHERE promotion_status = 'QUARANTINED'
 )
 -- DQ-01: Duplicate Store Choice on Student Preference Request

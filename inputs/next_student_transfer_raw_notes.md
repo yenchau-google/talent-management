@@ -2,7 +2,7 @@
 
 ## 1. Operational Context & Scale
 - Every summer (and returning holiday windows), **1,000+ retail store staff who are university students** apply to transfer between their **Home Store** and a **University Town Store** across **~470 UK stores**.
-- Today, a central HR / O&M team of **6–10 specialists (Lee's team, including Bryony)** coordinates this manually across **Google Forms**, **giant multi-tab Google Sheets**, automated mail-merges, **Yapster** chases, and **Store Manager (SM) cold calls**.
+- Today, a central HR / O&M team of **6–10 specialists** coordinates this manually across **Google Forms**, **giant multi-tab Google Sheets**, automated mail-merges, **Yapster** chases, and **Store Manager (SM) cold calls**.
 
 ## 2. Current Manual Pain Points ("As-Is" Bottlenecks)
 1. **Manual 30-Row Batch Copy-Pasting:** Specialists manually copy **30 rows at a time** from the Google Form response sheet into an `Area Converter` tab and `Stats Converter` tab, paste values into regional Area tabs, hide helper columns, and repair broken spreadsheet formulas when SMs accidentally edit cells.
@@ -28,7 +28,7 @@
 5. **Under-18 Safeguarding & Data Privacy:**
    - Some retail staff are `16–17` (`UNDER_18`) or have sensitive personal data. Raw names, personal mobile numbers (`07...`), emails, and DOBs should not sit in AI prompts or ad-hoc spreadsheets. Under-18s cannot work past `22:00` or exceed `8h/day` / `40h/week`.
 
-## 4. Unresolved Policy Questions Flagged in Margin Comments (Bryony's Notes)
+## 4. Unresolved Policy Questions Flagged in Margin Comments (HR Policy Notes)
 - **Edge Case 1 — Start-Date Gap (`[^c1]`):** What happens when a store's Scratchpad shift `available_from` date is *later* than the student's requested `target_transfer_date` (e.g., shift starts Oct 12, student arrives Sept 28)? Auto-match or flag for review?
 - **Edge Case 2 — Home-Store Shift Release Timing (`[^c2]`):** At what exact trigger point do we un-match/release the student's existing shifts at their Home Store so they aren't double-rostered or left with zero pay?
 - **Edge Case 3 — Sub-`5.5hr` Small Contracts (`[^c3]`):** If a store only has a single `4.0hr` shift left (`< 5.5hr` minimum contract), can a student opt into a `<5.5hr` small contract exception, or should we prompt the Store Manager to extend the shift by `+1.5hr`?
@@ -38,4 +38,4 @@
 - **90% reduction** in NEP pay-rate / grade-step / small-contract manual support cases.
 - **100% elimination** of manual `Area Converter` / `Stats Converter` Google Sheet copy-pasting.
 - Measurable YoY increase in **`3*` and `4*` permanent student talent retained** across UK stores.
-- **Launch Posture:** Lee's HR team wants **100% human review (`Stage 1`)** at launch to build trust, before graduating clean `>=5.5hr` matches to exception-only review (`Stage 2`) and eventually bounded autonomous matching (`Stage 3`).
+- **Launch Posture:** The Central HR team requires **100% human review (`Stage 1`)** at launch to build trust, before graduating clean `>=5.5hr` matches to exception-only review (`Stage 2`) and eventually bounded autonomous matching (`Stage 3`).

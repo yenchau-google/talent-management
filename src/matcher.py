@@ -10,7 +10,7 @@ Implements Rules 01, 02, and 03:
   - UK Young Worker (UNDER_18) Statutory Hard Block: no shift <06:00, >22:00, >8h/day, >40h/week (NFR-02)
   - 3-Pass Cascade (Choice 1 -> Choice 2 -> Choice 3) with Unique-Availability-First sub-pass,
     Single-Store Shift Lock, and >=5.5hr completion floor (FR-05)
-  - Bryony's 3 Exception Queues: DATE_GAP_REVIEW, SMALL_CONTRACT_EXCEPTION, SM_EXTEND_SHIFT_REVIEW (FR-06)
+  - 3 HR Exception Queues: DATE_GAP_REVIEW, SMALL_CONTRACT_EXCEPTION, SM_EXTEND_SHIFT_REVIEW (FR-06)
   - Batch-2 CMP Re-Match (SHF-9001..9003 at STORE-019 Leeds Trinity) & What-If Policy Simulator
   - HITL Override Audit Logger & Stage 1 -> Stage 2 (98.0%) Graduation Readiness Calculator (FR-08)
 """
@@ -478,7 +478,7 @@ def run_matching_engine(
                         "excluded_pending_cmp_shifts": pending_cmp_count,
                     })
 
-    # 4. Exception Pass for Sub-5.5hr Partial Contracts (FR-06 — Bryony's Comment [^c3])
+    # 4. Exception Pass for Sub-5.5hr Partial Contracts (FR-06 — Policy Flag [^c3])
     # For remaining eligible students who did not achieve >=5.5hr across Choices 1..3,
     # check if a single <5.5hr shift is available at Choice 1 (then Choice 2, Choice 3) and route to:
     #   - SMALL_CONTRACT_EXCEPTION (if small_contract_opt_in == true, e.g., STU-0221)

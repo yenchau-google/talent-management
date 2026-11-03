@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
+# ==============================================================================
+# NEXT PLC — Custom Domain Global Load Balancer, Google-Managed SSL & Cloud IAP
+# ==============================================================================
+# Provisions an External Application Load Balancer in front of Cloud Run App 1
+# (`next-portal-intake-app`) with a Google-Managed SSL certificate, Cloud DNS A
+# record registration, and Cloud Identity-Aware Proxy (IAP).
+# ==============================================================================
 set -euo pipefail
 
-PROJECT_ID="${ARGOLIS_PROJECT_ID:-talent-management-513520}"
-PROJECT_NUMBER="537939007190"
+PROJECT_ID="${GOOGLE_CLOUD_PROJECT:?Set GOOGLE_CLOUD_PROJECT in .env or environment}"
 REGION="${GOOGLE_CLOUD_LOCATION:-europe-west2}"
-DNS_PROJECT_ID="gitlab-432318"
-DNS_ZONE_NAME="dns-cloudrun"
-DOMAIN_NAME="next-portal.yenchau.demo.altostrat.com"
-SERVICE_NAME="next-portal-intake-app"
+DNS_PROJECT_ID="${DNS_PROJECT_ID:-${PROJECT_ID}}"
+DNS_ZONE_NAME="${DNS_ZONE_NAME:-next-retail-zone}"
+DOMAIN_NAME="${PORTAL_CUSTOM_DOMAIN:-next-portal.next-retail.example.com}"
+SERVICE_NAME="${PORTAL_SERVICE_NAME:-next-portal-intake-app}"
+IAP_ADMIN_PRINCIPAL="${IAP_ADMIN_PRINCIPAL:-hr-admin@next-retail.example.com}"
+
+PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
 
 echo "=== 1. Enabling Compute, Certificate Manager & IAP APIs in ${PROJECT_ID} ==="
 gcloud services enable compute.googleapis.com certificatemanager.googleapis.com iap.googleapis.com \
@@ -81,7 +90,7 @@ BRAND_NAME=$(gcloud iap oauth-brands list --project="${PROJECT_ID}" --format="va
 if [[ -z "${BRAND_NAME}" ]]; then
   BRAND_NAME=$(gcloud iap oauth-brands create \
     --application_title="NEXT Student Transfer Portal" \
-    --support_email="admin@yenchau.altostrat.com" \
+    --support_email="${IAP_ADMIN_PRINCIPAL}" \
     --project="${PROJECT_ID}" \
     --format="value(name)")
 fi
@@ -121,7 +130,7 @@ gcloud run services add-iam-policy-binding "${SERVICE_NAME}" \
 gcloud iap web add-iam-policy-binding \
   --resource-type=backend-services \
   --service=next-portal-backend \
-  --member="user:admin@yenchau.altostrat.com" \
+  --member="user:${IAP_ADMIN_PRINCIPAL}" \
   --role="roles/iap.httpsResourceAccessor" \
   --project="${PROJECT_ID}" >/dev/null
 

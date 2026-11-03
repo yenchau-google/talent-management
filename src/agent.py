@@ -44,12 +44,12 @@ load_dotenv(ROOT_DIR / ".env")
 GEMINI_MODEL_ID = os.getenv("GEMINI_MODEL_ID", "gemini-2.5-flash")
 MAX_OUTPUT_TOKENS = 1024
 
-SYSTEM_INSTRUCTION = """You are the NEXT PLC HR Student Transfer Coordinator (`next_hr_transfer_coordinator`) supporting Central HR Specialists (Lee, Bryony) in Gemini Enterprise across 470 UK retail stores.
+SYSTEM_INSTRUCTION = """You are the NEXT PLC HR Student Transfer Coordinator (`next_hr_transfer_coordinator`) supporting Central HR Specialists in Gemini Enterprise across 470 UK retail stores.
 
 You orchestrate 3 specialized ADK Sub-Agents backed by Google Cloud BigQuery (`next_student_transfer_staging` & `next_student_transfer_gold` in `europe-west2`) and Dataplex Auto Data Quality (`next-student-transfer-dq-scan` + `v_data_quality_warnings`):
 1. `dq_and_change_auditor_agent` — Audits Student (`STU-XXXX`) and Store Manager (`SM-XXX`) portal requests in `next_student_transfer_staging.portal_change_requests` and `change_audit_log`, surfaces `DQ-01`..`DQ-06` Dataplex / BigQuery warnings, and resolves quarantined changes (`resolve_quarantined_change` with `confirm: bool = False`).
 2. `matcher_and_simulator_agent` — Executes the deterministic 3-pass `>=5.5hr` matching engine on `next_student_transfer_gold`, explains student contention, runs Batch-2 3-day CMP re-matches, and runs What-If policy simulations (`sp_simulate_store_capacity`).
-3. `hr_comms_and_intervention_agent` — Generates the Student & Store Manager Comms Strategy, deterministically builds regex-verified recipient addresses (`admin+stu-XXXX@yenchau.altostrat.com`, `admin+sm-XXX@yenchau.altostrat.com`), stages outreach rows in `next_student_transfer_gold.outreach_email_log` (`STAGED_FOR_GE_GMAIL`), outputs copy-clean email blocks (`To`, `Subject`, `Body`) for the Gemini Enterprise native `@Gmail` connector handoff, and records Stage 1 HITL decisions (`record_hr_exception_decision` with `confirm: bool = False`).
+3. `hr_comms_and_intervention_agent` — Generates the Student & Store Manager Comms Strategy, deterministically builds regex-verified recipient addresses (`hr-notifications+stu-XXXX@next-retail.example.com`, `hr-notifications+sm-XXX@next-retail.example.com`), stages outreach rows in `next_student_transfer_gold.outreach_email_log` (`STAGED_FOR_GE_GMAIL`), outputs copy-clean email blocks (`To`, `Subject`, `Body`) for the Gemini Enterprise native `@Gmail` connector handoff, and records Stage 1 HITL decisions (`record_hr_exception_decision` with `confirm: bool = False`).
 
 NON-NEGOTIABLE OPERATING RULES:
 1. ZERO RAW PII: Never output or accept raw student names, personal emails, UK phone numbers (07... / +44...), DOBs, or National Insurance numbers. Refer to colleagues strictly as STU-XXXX and Store Managers as SM-XXX.
@@ -188,7 +188,7 @@ def generate_and_send_comms_strategy(send_emails: bool = True) -> dict[str, Any]
     """Generates the Student & Store Manager Comms Strategy for active DQ warnings and operational exception queues.
 
     Stages every email in `next_student_transfer_gold.outreach_email_log` (`delivery_status='STAGED_FOR_GE_GMAIL'`)
-    with deterministic regex-verified addresses (`admin+stu-XXXX@yenchau.altostrat.com`, `admin+sm-XXX@yenchau.altostrat.com`)
+    with deterministic regex-verified addresses (`hr-notifications+stu-XXXX@next-retail.example.com`, `hr-notifications+sm-XXX@next-retail.example.com`)
     and returns copy-clean email blocks (`To`, `Subject`, `Body`) for the 2-turn `@Gmail` handoff in Gemini Enterprise.
     """
     repo = get_bq_repository()
@@ -239,7 +239,7 @@ def generate_and_send_comms_strategy(send_emails: bool = True) -> dict[str, Any]
             staged_records.append(email_rec)
         comms_plan.append(item)
 
-    # 2. Always include representative operational exception outreach for Bryony's queues (STU-0222 / SM-019 & STU-0305 / SM-051)
+    # 2. Always include representative operational exception outreach for HR exception queues (STU-0222 / SM-019 & STU-0305 / SM-051)
     operational_outreach = [
         {
             "rule_id": "FR-06-SM-EXTEND",
@@ -768,7 +768,7 @@ def handle_chat_turn(message: str, use_vertex_llm: bool = True) -> dict[str, Any
 
             client = genai.Client(
                 vertexai=True,
-                project=os.getenv("GOOGLE_CLOUD_PROJECT", "talent-management-513520"),
+                project=os.getenv("GOOGLE_CLOUD_PROJECT", "next-student-transfer-prod"),
                 location=os.getenv("GOOGLE_CLOUD_LOCATION", "europe-west2"),
             )
             resp = client.models.generate_content(

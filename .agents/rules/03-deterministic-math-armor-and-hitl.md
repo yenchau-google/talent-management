@@ -15,4 +15,4 @@ description: Mandate deterministic Python + pytest for all matching math, region
 
 3. **Human-in-the-Loop (`HITL`) Staging & Zero Shadow IT:**
    - Phase 1 (`Stage 1: 100% Review`) never mutates downstream HR/ERP systems (`NPS` / `NEP` / `Oracle`) directly. Output approved placements solely to staged `'Do Not Post'` batch payloads and log every human override + reason to `transfer_audit_log` to feed the Golden Eval Set.
-   - Read `ARGOLIS_PROJECT_ID` and `GEMINI_ENTERPRISE_APP_ID` strictly from environment variables (`.env`), never hardcoded in source files. Deploy Cloud Run with `--no-allow-unauthenticated`.
+   - Read `GOOGLE_CLOUD_PROJECT` and `GEMINI_ENTERPRISE_APP_ID` strictly from environment variables (`.env`), never hardcoded in source files. Deploy Cloud Run with `--no-allow-unauthenticated`.
