@@ -1,0 +1,16 @@
+# SAIF Control -> Google Cloud Implementation (`Boundary [B]` vs `Mitigation [M]`)
+
+- **Boundary (`B`):** Deterministic control outside the LLM (schema gate, upstream tokenization, Python rule engine, IAM, HITL approval). Required on every Critical/High risk.
+- **Mitigation (`M`):** Classifier/model control (e.g., Model Armor prompt/response screening) — critical defense-in-depth layer, always paired with a `B` control.
+
+| SAIF Control | Google Cloud / Architecture Implementation | `B` / `M` | Verified Public Documentation |
+| :--- | :--- | :---: | :--- |
+| Privacy Enhancing Technologies | Upstream tokenization (`STU-XXXX`, `SM-XXX`, `age_band`) + Sensitive Data Protection (`SDP`) de-identification before LLM ingress | `B` | https://docs.cloud.google.com/sensitive-data-protection/docs/pseudonymization |
+| User Data Management | Zero customer data training under Google Cloud ToS; `europe-west2` regional storage & KMS; log retention policies | `B` | https://docs.cloud.google.com/kms/docs/key-management-service |
+| Input Validation and Sanitization | **Regional Model Armor (`europe-west2`)** prompt & tool-output screening (`sanitizeUserPrompt`: PI/Jailbreak + SDP + Malicious URLs) **+** deterministic `scan_dataset.py` CSV gate | `M` (Model Armor) + `B` (Schema Gate) | https://docs.cloud.google.com/model-armor/overview<br>https://docs.cloud.google.com/model-armor/data-residency |
+| Output Validation and Sanitization | **Regional Model Armor (`europe-west2`)** `sanitizeModelResponse` **+** **100% deterministic Python validator** for `>=5.5hr`, `Green Box`, `3-day CMP`, and `UNDER_18 <=22:00` statutory rules + escaped DOM rendering (`textContent`) | `M` (Model Armor) + `B` (Python Validator) | https://docs.cloud.google.com/model-armor/overview |
+| Adversarial Training and Testing | Pre-release red-team & golden evaluation gate (`pytest` + `adk eval` + prompt-injection test cases in `dirty_form_export.csv`) | `B` (CI Gate) | https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/evaluation-agents |
+| Application Access Management | Private Cloud Run (`--no-allow-unauthenticated`), Gemini Enterprise Workspace SSO, Cloud Run `--max-instances=2`, Apigee `LLMTokenQuota` | `B` | https://docs.cloud.google.com/gemini/enterprise/docs/manage-agents<br>https://docs.cloud.google.com/apigee/docs/api-platform/reference/policies/llm-token-quota-policy |
+| Agent User Control | Stage 1 `100% HITL` review in HR Control Tower before `'Do Not Post'` NEP staging export; Stage 3 automated circuit breaker | `B` | https://saif.google/secure-ai-framework/focus-on-agents |
+| Agent Permissions | Dedicated least-privilege Cloud Run SA; narrow typed Python tools (`run_batch_matching`, `explain_student_status`, `simulate_policy_change`); zero direct Oracle/NPS/NEP write credentials | `B` | https://docs.cloud.google.com/iam/docs/deny-overview<br>https://docs.cloud.google.com/gemini-enterprise-agent-platform/govern/agent-identity-overview |
+| Agent Observability | Cloud Logging + `transfer_audit_log` capturing `run_id`, tool inputs/outputs, Model Armor verdict, and human override telemetry | `B` | https://docs.cloud.google.com/security-command-center/docs/ai-protection-overview |

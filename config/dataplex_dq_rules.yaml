@@ -1,0 +1,39 @@
+# Dataplex Auto Data Quality Rules Specification
+# Target Table: projects/talent-management-513520/datasets/next_student_transfer_staging/tables/portal_change_requests
+# Scan ID: projects/talent-management-513520/locations/europe-west2/dataScans/next-student-transfer-dq-scan
+
+rules:
+  - name: dq01-distinct-store-choices
+    dimension: VALIDITY
+    description: "DQ-01: Student Choice 1, Choice 2, and Choice 3 store codes must be distinct on student preference requests."
+    threshold: 1.0
+    rowConditionExpectation:
+      sqlExpression: "target_table != 'students_gold' OR (choice_1 != IFNULL(choice_2, '') AND choice_1 != IFNULL(choice_3, '') AND (IFNULL(choice_2, '') = '' OR choice_2 != IFNULL(choice_3, '')))"
+
+  - name: dq02-transfer-continuity-gap-21-days
+    dimension: VALIDITY
+    description: "DQ-02: Calendar gap between last home store shift and first university store shift must be between 0 and 21 days."
+    threshold: 1.0
+    rowConditionExpectation:
+      sqlExpression: "target_table != 'students_gold' OR transfer_gap_days IS NULL OR (transfer_gap_days >= 0 AND transfer_gap_days <= 21)"
+
+  - name: dq03-shift-hours-contract-bounds
+    dimension: VALIDITY
+    description: "DQ-03: Store shift weekly_hours must fall within 4.0 to 12.0 hours."
+    threshold: 1.0
+    rowConditionExpectation:
+      sqlExpression: "target_table != 'store_shifts_gold' OR shift_hours IS NULL OR (shift_hours >= 4.0 AND shift_hours <= 12.0)"
+
+  - name: dq05-green-box-protection-integrity
+    dimension: INTEGRITY
+    description: "DQ-05: Protected Green Box shifts (was_green_box_protected=TRUE) cannot be unlocked without HR override."
+    threshold: 1.0
+    rowConditionExpectation:
+      sqlExpression: "target_table != 'store_shifts_gold' OR NOT (IFNULL(was_green_box_protected, FALSE) = TRUE AND IFNULL(new_is_green_box_protected, TRUE) = FALSE)"
+
+  - name: dq06-uk-under18-statutory-curfew
+    dimension: VALIDITY
+    description: "DQ-06: UK Young Worker (UNDER_18) statutory curfew prohibits preferred_latest_finish after 22:00 (https://www.gov.uk/rest-breaks-work/young-workers)."
+    threshold: 1.0
+    rowConditionExpectation:
+      sqlExpression: "target_table != 'students_gold' OR IFNULL(age_band, '') != 'UNDER_18' OR IFNULL(preferred_latest_finish, '21:30') <= '22:00'"

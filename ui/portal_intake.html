@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXT — Colleague Store Transfers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* Surfaces — Open Canvas + Crisp Workspace */
+      --canvas: #F7F7F5;
+      --surface: #FFFFFF;
+      --surface-subtle: #F2F1EE;
+
+      /* Typography & Hairlines */
+      --ink: #111111;
+      --ink-secondary: #52525B;
+      --ink-muted: #71717A;
+      --hairline: #E4E4E0;
+      --hairline-strong: #D4D4CE;
+
+      /* Primary Brand Action — Confident Carbon Black */
+      --action-bg: #111111;
+      --action-bg-hover: #27272A;
+      --action-ink: #FFFFFF;
+
+      /* Reserved Semantic Inks (Strictly for real validation/policy states) */
+      --ok-bg: #ECFDF5;     --ok-border: #A7F3D0;     --ok-ink: #065F46;
+      --warn-bg: #FFFBEB;   --warn-border: #FDE68A;   --warn-ink: #92400E;
+      --err-bg: #FEF2F2;    --err-border: #FECACA;    --err-ink: #991B1B;
+
+      /* Scale & Geometry (4pt base + 4px architectural radius lock) */
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      --radius: 4px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-12: 48px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 96px;
+    }
+
+    .tabular {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.875em;
+    }
+
+    /* Focus visibility per modern-web-guidance accessibility/forms */
+    input:focus-visible,
+    select:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px;
+    }
+
+    /* =========================================================================
+       Top Bar (56px height, 1px bottom hairline, stark #FFFFFF)
+       ========================================================================= */
+    .topbar {
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-6);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .brand-wordmark {
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .topbar-divider {
+      color: var(--hairline-strong);
+      font-weight: 300;
+    }
+
+    .product-title {
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--ink-secondary);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .phase-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-muted);
+      background: var(--surface-subtle);
+      border: 1px solid var(--hairline);
+      padding: 3px 8px;
+      border-radius: var(--radius);
+      letter-spacing: 0.02em;
+    }
+
+    .context-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 4px 10px;
+      background: var(--surface);
+      border: 1px solid var(--hairline-strong);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .context-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    /* =========================================================================
+       Workspace Containers
+       ========================================================================= */
+    .workspace-student {
+      max-width: 920px;
+      margin: var(--space-8) auto;
+      padding: 0 var(--space-6);
+    }
+
+    .workspace-manager {
+      max-width: 1100px;
+      margin: var(--space-8) auto;
+      padding: 0 var(--space-6);
+    }
+
+    .page-heading {
+      margin: 0 0 var(--space-1) 0;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .page-subtitle {
+      margin: 0 0 var(--space-6) 0;
+      font-size: 14px;
+      color: var(--ink-secondary);
+    }
+
+    /* Contract Context Strip (Read-Only Grounding) */
+    .contract-strip {
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin-bottom: var(--space-6);
+    }
+
+    .contract-cell {
+      padding: var(--space-3) var(--space-4);
+      border-right: 1px solid var(--hairline);
+    }
+
+    .contract-cell:last-child {
+      border-right: none;
+    }
+
+    .contract-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-muted);
+      margin-bottom: 2px;
+    }
+
+    .contract-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    /* Student Two-Column Guided Flow + Live Summary Rail */
+    .student-grid {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: var(--space-6);
+      align-items: start;
+    }
+
+    @media (max-width: 820px) {
+      .student-grid {
+        grid-template-columns: 1fr;
+      }
+      .contract-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+      .phase-tag {
+        display: none;
+      }
+    }
+
+    .sheet {
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+    }
+
+    .sheet-section {
+      padding: var(--space-6);
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    .sheet-section:last-child {
+      border-bottom: none;
+    }
+
+    .step-kicker {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-muted);
+      margin-bottom: var(--space-1);
+    }
+
+    .section-title {
+      margin: 0 0 var(--space-1) 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .section-desc {
+      margin: 0 0 var(--space-4) 0;
+      font-size: 13px;
+      color: var(--ink-secondary);
+    }
+
+    /* City Filter Bar */
+    .city-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin-bottom: var(--space-4);
+    }
+
+    .city-pill {
+      background: var(--surface-subtle);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      padding: 5px 11px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-secondary);
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+
+    .city-pill:hover {
+      border-color: var(--hairline-strong);
+      color: var(--ink);
+    }
+
+    .city-pill[aria-pressed="true"] {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--action-ink);
+    }
+
+    /* Store Directory Rows */
+    .store-list {
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      max-height: 290px;
+      overflow-y: auto;
+    }
+
+    .store-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--hairline);
+      background: var(--surface);
+      transition: background 120ms ease;
+    }
+
+    .store-row:last-child {
+      border-bottom: none;
+    }
+
+    .store-row:hover {
+      background: var(--canvas);
+    }
+
+    .store-row-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .store-row-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .store-row-meta {
+      font-size: 12px;
+      color: var(--ink-secondary);
+    }
+
+    .btn-slot-Assign {
+      background: var(--surface);
+      border: 1px solid var(--hairline-strong);
+      border-radius: var(--radius);
+      padding: 5px 10px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-slot-Assign:hover {
+      background: var(--surface-subtle);
+    }
+
+    .btn-slot-Assign.is-selected {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--action-ink);
+    }
+
+    /* Form Controls (Gestalt proximity rule: label closer to input than field group gap) */
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .field-group {
+      margin-bottom: var(--space-4);
+    }
+
+    .field-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label.field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .field-hint {
+      display: block;
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-top: 4px;
+    }
+
+    input[type="date"],
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      height: 38px;
+      padding: 0 var(--space-3);
+      background: var(--surface);
+      border: 1px solid var(--hairline-strong);
+      border-radius: var(--radius);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--ink);
+    }
+
+    /* Live 21-Day Continuity Feedback Bar */
+    .continuity-bar {
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius);
+      border: 1px solid var(--ok-border);
+      background: var(--ok-bg);
+      color: var(--ok-ink);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-4);
+    }
+
+    .continuity-bar.is-warn {
+      background: var(--warn-bg);
+      border-color: var(--warn-border);
+      color: var(--warn-ink);
+    }
+
+    .continuity-bar.is-err {
+      background: var(--err-bg);
+      border-color: var(--err-border);
+      color: var(--err-ink);
+    }
+
+    /* Right-Hand Ranked Preference Rail */
+    .summary-rail {
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      padding: var(--space-6);
+      position: sticky;
+      top: 80px;
+    }
+
+    .rail-title {
+      margin: 0 0 var(--space-3) 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .pref-slot {
+      padding: var(--space-3);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      margin-bottom: var(--space-2);
+      background: var(--canvas);
+    }
+
+    .pref-slot-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-muted);
+      margin-bottom: 4px;
+    }
+
+    .pref-slot-select {
+      height: 32px;
+      font-size: 13px;
+      padding: 0 8px;
+    }
+
+    /* Primary Action Button & Footer */
+    .action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      padding-top: var(--space-2);
+    }
+
+    .btn-primary {
+      background: var(--action-bg);
+      color: var(--action-ink);
+      border: 1px solid var(--action-bg);
+      border-radius: var(--radius);
+      height: 40px;
+      padding: 0 var(--space-6);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 120ms ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--action-bg-hover);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .reassurance-copy {
+      font-size: 12px;
+      color: var(--ink-muted);
+      line-height: 1.4;
+    }
+
+    /* Status Feedback Banner */
+    .status-banner {
+      margin-top: var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius);
+      font-size: 13px;
+      border: 1px solid var(--hairline);
+      display: none;
+    }
+
+    .status-banner.is-visible {
+      display: block;
+    }
+
+    .status-banner.is-ok {
+      background: var(--ok-bg);
+      border-color: var(--ok-border);
+      color: var(--ok-ink);
+    }
+
+    .status-banner.is-err {
+      background: var(--err-bg);
+      border-color: var(--err-border);
+      color: var(--err-ink);
+    }
+
+    /* =========================================================================
+       Persona B — Store Manager View (Open-Canvas Shift Roster Table)
+       ========================================================================= */
+    .manager-summary-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      padding: var(--space-4) var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+
+    .manager-counts {
+      display: flex;
+      gap: var(--space-6);
+      font-size: 13px;
+      color: var(--ink-secondary);
+    }
+
+    .roster-table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      overflow-x: auto;
+    }
+
+    table.roster-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .roster-table th {
+      padding: var(--space-3) var(--space-4);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-muted);
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    .roster-table td {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--hairline);
+      font-size: 14px;
+      vertical-align: middle;
+    }
+
+    .roster-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Inline 0.5h Stepper */
+    .hours-stepper {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--hairline-strong);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .stepper-btn {
+      width: 28px;
+      height: 30px;
+      border: none;
+      background: var(--surface-subtle);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .stepper-btn:hover {
+      background: var(--hairline);
+    }
+
+    .stepper-input {
+      width: 54px !important;
+      height: 30px !important;
+      border: none !important;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      padding: 0 4px !important;
+    }
+
+    /* Protected Shift Badge & Switch */
+    .badge-protected {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius);
+      background: var(--surface-subtle);
+      border: 1px solid var(--hairline-strong);
+      color: var(--ink);
+    }
+
+    .badge-open {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      font-size: 12px;
+      color: var(--ink-muted);
+    }
+
+    .switch-label {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--ink);
+      user-select: none;
+    }
+
+    .switch-input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--ink);
+      cursor: pointer;
+    }
+
+    .btn-row-save {
+      background: var(--action-bg);
+      color: var(--action-ink);
+      border: 1px solid var(--action-bg);
+      border-radius: var(--radius);
+      height: 32px;
+      padding: 0 12px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-row-save:hover:not(:disabled) {
+      background: var(--action-bg-hover);
+    }
+
+    .row-validation-msg {
+      background: var(--err-bg);
+      color: var(--err-ink);
+      font-size: 12px;
+      padding: 8px var(--space-4);
+      border-bottom: 1px solid var(--err-border);
+    }
+
+    .row-validation-msg.is-ok {
+      background: var(--ok-bg);
+      color: var(--ok-ink);
+      border-bottom-color: var(--ok-border);
+    }
+
+    /* =========================================================================
+       Floating Presenter Stage Dock (Bottom-Right, Contrasting Dark Slate)
+       ========================================================================= */
+    .presenter-dock {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 100;
+      font-family: var(--font-sans);
+    }
+
+    .presenter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #18181B;
+      color: #FAFAFA;
+      border: 1px solid #3F3F46;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .presenter-pill:hover {
+      background: #27272A;
+    }
+
+    .presenter-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+    }
+
+    .presenter-dot.has-quarantine {
+      background: #F59E0B;
+    }
+
+    .presenter-pill kbd,
+    .scenario-btn kbd {
+      background: #27272A;
+      border: 1px solid #52525B;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 11px;
+      color: #E4E4E7;
+    }
+
+    .presenter-panel {
+      width: 360px;
+      background: #18181B;
+      color: #FAFAFA;
+      border: 1px solid #3F3F46;
+      border-radius: 6px;
+      padding: 14px;
+      margin-top: 8px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    }
+
+    .presenter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: #E4E4E7;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #27272A;
+      margin-bottom: 12px;
+    }
+
+    .presenter-section {
+      margin-bottom: 12px;
+    }
+
+    .presenter-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #A1A1AA;
+      margin-bottom: 6px;
+    }
+
+    .presenter-segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .presenter-segmented button {
+      background: #27272A;
+      color: #D4D4D8;
+      border: 1px solid #3F3F46;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .presenter-segmented button[aria-pressed="true"] {
+      background: #FAFAFA;
+      color: #18181B;
+      border-color: #FAFAFA;
+      font-weight: 600;
+    }
+
+    .scenario-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #27272A;
+      color: #FAFAFA;
+      border: 1px solid #3F3F46;
+      border-radius: 4px;
+      padding: 7px 10px;
+      margin-bottom: 6px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .scenario-btn:hover:not(:disabled) {
+      background: #3F3F46;
+    }
+
+    .scenario-reset {
+      border-color: #52525B;
+      color: #D4D4D8;
+    }
+
+    .presenter-telemetry {
+      font-size: 11px;
+      color: #A1A1AA;
+      padding-top: 8px;
+      border-top: 1px solid #27272A;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar (56px, stark white, hairline border) -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="brand-wordmark">NEXT</span>
+      <span class="topbar-divider">/</span>
+      <span class="product-title">Colleague Store Transfers</span>
+    </div>
+    <div class="topbar-right">
+      <span class="phase-tag">[PHASE 2 SELF-SERVICE PORTAL PREVIEW — PHASE 1 COMPATIBLE WITH GOOGLE SHEETS]</span>
+      <div class="context-pill" id="activeContextPill">
+        <span class="context-dot"></span>
+        <span id="activeContextLabel" class="tabular">STU-0412 · Home Store #104</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       PERSONA A: STUDENT COLLEAGUE VIEW (max-width: 920px)
+       ========================================================================= -->
+  <main class="workspace-student" id="studentWorkspace">
+    <h1 class="page-heading">Autumn Term Store Transfer Request</h1>
+    <p class="page-subtitle">Select up to three ranked stores near your university and confirm your term transition dates.</p>
+
+    <!-- Read-Only Contract Context Strip -->
+    <section class="contract-strip" aria-label="Current employment contract details">
+      <div class="contract-cell">
+        <div class="contract-label">Colleague Reference</div>
+        <div class="contract-value tabular" id="stuRefCell">STU-0412</div>
+      </div>
+      <div class="contract-cell">
+        <div class="contract-label">Home Store</div>
+        <div class="contract-value tabular" id="stuHomeStoreCell">STR-104</div>
+      </div>
+      <div class="contract-cell">
+        <div class="contract-label">Age &amp; Curfew Band</div>
+        <div class="contract-value" id="stuAgeBandCell">18+ Adult</div>
+      </div>
+      <div class="contract-cell">
+        <div class="contract-label">Contract Standing</div>
+        <div class="contract-value" id="stuStandingCell">4★ Permanent</div>
+      </div>
+    </section>
+
+    <form id="studentTransferForm" action="/api/student/STU-0412" method="POST" novalidate>
+      <div class="student-grid">
+        <!-- Left Guided Column -->
+        <div class="sheet">
+          <!-- Step 1: University Town & Store Directory -->
+          <div class="sheet-section">
+            <div class="step-kicker">Step 01</div>
+            <h2 class="section-title">Choose your university city &amp; preferred stores</h2>
+            <p class="section-desc">Filter open autumn stores below and click a store to assign it to your 1st, 2nd, or 3rd preference slot.</p>
+
+            <div class="city-filter-bar" role="group" aria-label="Filter stores by city">
+              <button type="button" class="city-pill" data-city="ALL" aria-pressed="true">All Open Stores</button>
+              <button type="button" class="city-pill" data-city="Manchester" aria-pressed="false">Manchester</button>
+              <button type="button" class="city-pill" data-city="Leeds" aria-pressed="false">Leeds</button>
+              <button type="button" class="city-pill" data-city="Birmingham" aria-pressed="false">Birmingham</button>
+              <button type="button" class="city-pill" data-city="London" aria-pressed="false">London</button>
+              <button type="button" class="city-pill" data-city="Nottingham" aria-pressed="false">Nottingham</button>
+            </div>
+
+            <div class="store-list" id="storeDirectoryList" aria-label="Available destination stores">
+              <!-- Populated dynamically from /api/state -->
+            </div>
+          </div>
+
+          <!-- Step 2: Transfer Dates & Working Window -->
+          <div class="sheet-section">
+            <div class="step-kicker">Step 02</div>
+            <h2 class="section-title">Confirm transition dates &amp; latest finish time</h2>
+            <p class="section-desc">To preserve continuous service automatically, your first available university shift must be within 21 calendar days of your final home store shift.</p>
+
+            <div class="form-grid-2">
+              <div class="field-group">
+                <label class="field-label" for="lastHomeShiftDate">Last shift at Home Store</label>
+                <input type="date" id="lastHomeShiftDate" name="last_home_shift_date" value="2026-09-13" required aria-describedby="continuityStatusBar" />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="firstUniShiftDate">First available day at Uni Store</label>
+                <input type="date" id="firstUniShiftDate" name="preferred_transfer_date" value="2026-09-27" required aria-describedby="continuityStatusBar" />
+              </div>
+            </div>
+
+            <!-- Live 21-Day Continuity Bar -->
+            <div class="continuity-bar" id="continuityStatusBar" role="status" aria-live="polite">
+              <span id="continuityStatusText">14 days transition gap — Continuous service preserved (within 21-day policy window)</span>
+              <span class="tabular" id="continuityDaysBadge">14d / 21d max</span>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="field-group">
+                <label class="field-label" for="latestFinishSelect">Latest evening shift finish time</label>
+                <select id="latestFinishSelect" name="preferred_latest_finish" aria-describedby="curfewHint">
+                  <option value="20:00">20:00 (Standard Day Close)</option>
+                  <option value="21:00">21:00 (Evening Retail Close)</option>
+                  <option value="21:30">21:30 (Extended Retail Close)</option>
+                  <option value="22:00">22:00 (Statutory Young Worker Limit)</option>
+                  <option value="23:30">23:30 (Late Night Stock &amp; Close — 18+ Only)</option>
+                </select>
+                <span class="field-hint" id="curfewHint">UK Young Worker regulations prohibit colleagues under 18 from working past 22:00.</span>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="availableDaysSelect">Preferred working days</label>
+                <select id="availableDaysSelect" name="available_days">
+                  <option value="Sat,Sun">Weekend Only (Sat, Sun)</option>
+                  <option value="Fri,Sat,Sun">Extended Weekend (Fri, Sat, Sun)</option>
+                  <option value="Wed,Sat,Sun">Midweek + Weekend (Wed, Sat, Sun)</option>
+                  <option value="Mon,Tue,Thu,Sat">Flexible Multi-Day (Mon, Tue, Thu, Sat)</option>
+                </select>
+                <span class="field-hint">Matched against open store rosters target of at least 5.5 weekly hours.</span>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <span class="reassurance-copy">Changes are checked immediately; policy exceptions are held for People Team review before your contract updates.</span>
+              <button type="submit" class="btn-primary" id="saveStudentBtn">Save transfer preferences</button>
+            </div>
+
+            <div class="status-banner" id="studentFeedbackBanner" role="alert" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- Right-Hand Ranked Preference Summary Rail -->
+        <aside class="summary-rail" aria-label="Ranked store preferences">
+          <h3 class="rail-title">Ranked Store Choices</h3>
+
+          <div class="pref-slot">
+            <div class="pref-slot-header">
+              <span>1st Preference</span>
+              <span class="tabular">Primary</span>
+            </div>
+            <label class="field-label" for="choice1Select" style="font-size:12px;margin-bottom:2px;">First choice store</label>
+            <select id="choice1Select" name="choice_1_store_id" class="pref-slot-select"></select>
+          </div>
+
+          <div class="pref-slot">
+            <div class="pref-slot-header">
+              <span>2nd Preference</span>
+              <span class="tabular">Fallback 1</span>
+            </div>
+            <label class="field-label" for="choice2Select" style="font-size:12px;margin-bottom:2px;">Second choice store</label>
+            <select id="choice2Select" name="choice_2_store_id" class="pref-slot-select"></select>
+          </div>
+
+          <div class="pref-slot">
+            <div class="pref-slot-header">
+              <span>3rd Preference</span>
+              <span class="tabular">Fallback 2</span>
+            </div>
+            <label class="field-label" for="choice3Select" style="font-size:12px;margin-bottom:2px;">Third choice store</label>
+            <select id="choice3Select" name="choice_3_store_id" class="pref-slot-select"></select>
+          </div>
+
+          <div style="margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--hairline); font-size: 12px; color: var(--ink-secondary);">
+            <div style="font-weight: 600; color: var(--ink); margin-bottom: 4px;">How matching works</div>
+            Stores are allocated in three passes (1st choice, then 2nd, then 3rd) prioritising 5.5h+ weekly contracts and cleared 3-day internal vacancies.
+          </div>
+        </aside>
+      </div>
+    </form>
+  </main>
+
+  <!-- =========================================================================
+       PERSONA B: STORE MANAGER VIEW (max-width: 1100px, Open-Canvas Shift Roster)
+       ========================================================================= -->
+  <main class="workspace-manager" id="managerWorkspace" hidden>
+    <h1 class="page-heading">Autumn Student Transfer Shift Roster</h1>
+    <p class="page-subtitle">Confirm weekly shift hours and 3-day internal vacancy clearance so Central HR can match incoming university colleagues.</p>
+
+    <section class="manager-summary-bar" aria-label="Store shift roster summary">
+      <div>
+        <div style="font-size: 15px; font-weight: 600; color: var(--ink);" id="mgrStoreHeading">Manchester Arndale (#204) &amp; Regional Spotlight Roster</div>
+        <div style="font-size: 13px; color: var(--ink-secondary);">Minimum single shift contract floor: 4.0 hrs/wk · Protected colleague shifts require HR approval to unlock</div>
+      </div>
+      <div class="manager-counts tabular">
+        <span>Open &amp; Cleared: <strong id="mgrClearedCount" style="color:var(--ink);">0</strong></span>
+        <span>Awaiting 3-Day Check: <strong id="mgrPendingCount" style="color:var(--ink);">0</strong></span>
+        <span>Protected Shifts: <strong id="mgrProtectedCount" style="color:var(--ink);">0</strong></span>
+      </div>
+    </section>
+
+    <div class="roster-table-wrap">
+      <table class="roster-table">
+        <thead>
+          <tr>
+            <th>Shift Code</th>
+            <th>Store</th>
+            <th>Day &amp; Window</th>
+            <th>Weekly Hours</th>
+            <th>Shift Protection</th>
+            <th>3-Day Internal Check</th>
+            <th style="text-align:right;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="managerRosterBody">
+          <!-- Populated dynamically from /api/state -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       COLLAPSIBLE PRESENTER STAGE DOCK (Gated behind DEMO_MODE=true)
+       ========================================================================= -->
+  <aside class="presenter-dock" id="presenterDock" data-open="false" aria-label="Presenter demo controls" hidden>
+    <button type="button" class="presenter-pill" id="presenterToggle" title="Toggle Presenter Controls (Shortcut: `)">
+      <span class="presenter-dot" id="presenterStatusDot"></span>
+      <span>Presenter</span>
+      <kbd class="tabular">`</kbd>
+    </button>
+
+    <div class="presenter-panel" id="presenterPanel" hidden>
+      <div class="presenter-header">
+        <span>Live Showcase Stage Controls</span>
+        <span class="tabular">Keys 1–3 · R</span>
+      </div>
+
+      <div class="presenter-section">
+        <div class="presenter-label">Switch Active Persona View</div>
+        <div class="presenter-segmented">
+          <button type="button" data-persona="student" data-actor="STU-0412" aria-pressed="true">Student · STU-0412 (18+)</button>
+          <button type="button" data-persona="student" data-actor="STU-0109" aria-pressed="false">Student · STU-0109 (&lt;18)</button>
+          <button type="button" data-persona="manager" data-actor="SM-019" aria-pressed="false">Manager · SM-019 (#204)</button>
+          <button type="button" data-persona="manager" data-actor="SM-012" aria-pressed="false">Manager · SM-012 (#108)</button>
+        </div>
+      </div>
+
+      <div class="presenter-section">
+        <div class="presenter-label">1-Click Scenario Injectors (Staging + Dataplex Scan)</div>
+        <button type="button" class="scenario-btn" data-scenario="SCENARIO_1_VALID_CLEARANCE">
+          <kbd class="tabular">1</kbd>
+          <span>Valid 3-day clearance (SM-019 promotes SHF-9001..9003)</span>
+        </button>
+        <button type="button" class="scenario-btn" data-scenario="SCENARIO_2_STUDENT_DQ_VIOLATION">
+          <kbd class="tabular">2</kbd>
+          <span>Duplicate store + Under-18 23:30 curfew (Quarantine)</span>
+        </button>
+        <button type="button" class="scenario-btn" data-scenario="SCENARIO_3_MANAGER_DQ_VIOLATION">
+          <kbd class="tabular">3</kbd>
+          <span>3.0h sub-minimum shift + Green Box unlock (Quarantine)</span>
+        </button>
+        <button type="button" class="scenario-btn scenario-reset" data-scenario="SCENARIO_4_RESET">
+          <kbd class="tabular">R</kbd>
+          <span>Reset staging &amp; demo state</span>
+        </button>
+      </div>
+
+      <div class="presenter-telemetry tabular" id="presenterTelemetry">
+        Loading staging &amp; Dataplex telemetry...
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    const state = {
+      persona: 'student',       // 'student' | 'manager'
+      activeStudentId: 'STU-0412',
+      activeManagerId: 'SM-019',
+      cityFilter: 'ALL',
+      students: [],
+      shifts: [],
+      storeDirectory: [],
+      dqWarnings: [],
+      portalRequests: [],
+      dataplexScan: {},
+      demoMode: true,
+    };
+
+    const STORE_OPTIONS = [
+      { id: 'STORE-042', label: 'STORE-042 · Nottingham Victoria Centre' },
+      { id: 'STORE-043', label: 'STORE-043 · Nottingham Giltbrook' },
+      { id: 'STORE-012', label: 'STORE-012 · Manchester Arndale' },
+      { id: 'STORE-019', label: 'STORE-019 · Leeds Trinity' },
+      { id: 'STORE-051', label: 'STORE-051 · Edinburgh St James' },
+      { id: 'STORE-001', label: 'STORE-001 · London Oxford Street' },
+      { id: 'STORE-008', label: 'STORE-008 · Birmingham Bullring' },
+      { id: 'STORE-014', label: 'STORE-014 · Manchester Trafford Centre' },
+      { id: 'STORE-025', label: 'STORE-025 · Sheffield Meadowhall' },
+      { id: 'STORE-033', label: 'STORE-033 · Liverpool One' },
+    ];
+
+    function populateStoreSelects() {
+      ['choice1Select', 'choice2Select', 'choice3Select'].forEach((selId) => {
+        const sel = document.getElementById(selId);
+        sel.innerHTML = '';
+        STORE_OPTIONS.forEach((opt) => {
+          const o = document.createElement('option');
+          o.value = opt.id;
+          o.textContent = opt.label;
+          sel.appendChild(o);
+        });
+      });
+    }
+
+    function calculateContinuityGap() {
+      const homeVal = document.getElementById('lastHomeShiftDate').value;
+      const uniVal = document.getElementById('firstUniShiftDate').value;
+      const bar = document.getElementById('continuityStatusBar');
+      const textEl = document.getElementById('continuityStatusText');
+      const badgeEl = document.getElementById('continuityDaysBadge');
+
+      if (!homeVal || !uniVal) return 14;
+      const d1 = new Date(homeVal + 'T00:00:00Z');
+      const d2 = new Date(uniVal + 'T00:00:00Z');
+      const diffDays = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+
+      bar.classList.remove('is-warn', 'is-err');
+      if (diffDays < 0) {
+        bar.classList.add('is-err');
+        textEl.textContent = `${diffDays} days gap — Start date cannot be earlier than your final Home Store shift`;
+        badgeEl.textContent = `${diffDays}d (Invalid)`;
+      } else if (diffDays <= 21) {
+        textEl.textContent = `${diffDays} days transition gap — Continuous service preserved (within 21-day policy window)`;
+        badgeEl.textContent = `${diffDays}d / 21d max`;
+      } else {
+        bar.classList.add('is-warn');
+        textEl.textContent = `${diffDays} days transition gap — Exceeds 21-day continuity threshold; held for People Team review`;
+        badgeEl.textContent = `${diffDays}d (>21d limit)`;
+      }
+      return diffDays;
+    }
+
+    function checkCurfewHint() {
+      const stu = state.students.find((s) => s.student_id === state.activeStudentId);
+      const finishVal = document.getElementById('latestFinishSelect').value;
+      const hint = document.getElementById('curfewHint');
+      if (stu && stu.age_band === 'UNDER_18' && finishVal > '22:00') {
+        hint.style.color = 'var(--err-ink)';
+        hint.style.fontWeight = '600';
+        hint.textContent = 'Statutory Alert: Colleagues under 18 cannot work past 22:00. Saving will quarantine this request for HR review.';
+      } else {
+        hint.style.color = 'var(--ink-muted)';
+        hint.style.fontWeight = '400';
+        hint.textContent = 'UK Young Worker regulations prohibit colleagues under 18 from working past 22:00.';
+      }
+    }
+
+    function renderStudentView() {
+      const stu = state.students.find((s) => s.student_id === state.activeStudentId) || state.students[0];
+      if (!stu) return;
+
+      document.getElementById('stuRefCell').textContent = stu.student_id;
+      document.getElementById('stuHomeStoreCell').textContent = stu.home_store_id || stu.current_store_id || 'STORE-104';
+      document.getElementById('stuAgeBandCell').textContent =
+        stu.age_band === 'UNDER_18' ? 'Under 18 (Curfew <= 22:00)' : '18+ Adult';
+      document.getElementById('stuStandingCell').textContent = `${stu.star_rating || 4}★ Permanent`;
+
+      // Ensure current store choices exist in select options
+      [stu.choice_1_store_id, stu.choice_2_store_id, stu.choice_3_store_id].forEach((cid) => {
+        if (cid && !STORE_OPTIONS.some((o) => o.id === cid)) {
+          STORE_OPTIONS.push({ id: cid, label: `${cid} · Regional Store` });
+        }
+      });
+      populateStoreSelects();
+
+      document.getElementById('choice1Select').value = stu.choice_1_store_id || 'STORE-042';
+      document.getElementById('choice2Select').value = stu.choice_2_store_id || 'STORE-043';
+      document.getElementById('choice3Select').value = stu.choice_3_store_id || 'STORE-019';
+
+      const prefDate = stu.preferred_transfer_date || stu.target_transfer_date;
+      if (prefDate) {
+        document.getElementById('firstUniShiftDate').value = String(prefDate).slice(0, 10);
+      }
+      if (stu.preferred_latest_finish) {
+        const sel = document.getElementById('latestFinishSelect');
+        if (![...sel.options].some((o) => o.value === stu.preferred_latest_finish)) {
+          const opt = document.createElement('option');
+          opt.value = stu.preferred_latest_finish;
+          opt.textContent = `${stu.preferred_latest_finish} (Custom Close)`;
+          sel.appendChild(opt);
+        }
+        sel.value = stu.preferred_latest_finish;
+      }
+
+      calculateContinuityGap();
+      checkCurfewHint();
+      renderStoreDirectory();
+
+      // Show if this student currently has a QUARANTINED request in portal_change_requests
+      const banner = document.getElementById('studentFeedbackBanner');
+      const activeQuarantine = state.dqWarnings.filter((w) => w.entity_id === stu.student_id);
+      if (activeQuarantine.length > 0) {
+        banner.className = 'status-banner is-visible is-err';
+        const descriptions = activeQuarantine
+          .map((w) => w.issue_description || w.issue_summary || w.dq_reason || w.rule_id)
+          .join(' · ');
+        banner.textContent = `Held for People Team Review (${activeQuarantine[0].request_id}): ${descriptions}. Your trusted contract record remains unchanged pending HR review.`;
+      } else {
+        banner.className = 'status-banner';
+        banner.textContent = '';
+      }
+    }
+
+    function renderStoreDirectory() {
+      const listEl = document.getElementById('storeDirectoryList');
+      listEl.innerHTML = '';
+
+      const c1 = document.getElementById('choice1Select').value;
+      const c2 = document.getElementById('choice2Select').value;
+      const c3 = document.getElementById('choice3Select').value;
+
+      const filtered = state.storeDirectory.filter((st) => {
+        if (state.cityFilter === 'ALL') return true;
+        return (
+          st.store_name.toLowerCase().includes(state.cityFilter.toLowerCase()) ||
+          st.region.toLowerCase().includes(state.cityFilter.toLowerCase())
+        );
+      });
+
+      const items = filtered.length > 0 ? filtered : state.storeDirectory;
+      items.forEach((st) => {
+        const row = document.createElement('div');
+        row.className = 'store-row';
+
+        let slotBadge = 'Assign preference';
+        let isSelected = false;
+        if (st.store_id === c1) {
+          slotBadge = '1st Choice';
+          isSelected = true;
+        } else if (st.store_id === c2) {
+          slotBadge = '2nd Choice';
+          isSelected = true;
+        } else if (st.store_id === c3) {
+          slotBadge = '3rd Choice';
+          isSelected = true;
+        }
+
+        row.innerHTML = `
+          <div class="store-row-main">
+            <div class="store-row-title">
+              <span class="tabular">${st.store_id}</span>
+              <span>${st.store_name}</span>
+            </div>
+            <div class="store-row-meta tabular">
+              ${st.sample_window} · ${st.open_cleared_shifts} cleared / ${st.total_shifts} total shifts
+            </div>
+          </div>
+          <button type="button" class="btn-slot-Assign ${isSelected ? 'is-selected' : ''}" data-store-id="${st.store_id}">
+            ${slotBadge}
+          </button>
+        `;
+
+        row.querySelector('button').addEventListener('click', () => {
+          const s1 = document.getElementById('choice1Select');
+          const s2 = document.getElementById('choice2Select');
+          const s3 = document.getElementById('choice3Select');
+          if (s1.value !== st.store_id && s2.value !== st.store_id && s3.value !== st.store_id) {
+            s3.value = s2.value;
+            s2.value = s1.value;
+            s1.value = st.store_id;
+          }
+          renderStoreDirectory();
+        });
+
+        listEl.appendChild(row);
+      });
+    }
+
+    function renderManagerView() {
+      const tbody = document.getElementById('managerRosterBody');
+      tbody.innerHTML = '';
+
+      let clearedCount = 0;
+      let pendingCount = 0;
+      let protectedCount = 0;
+
+      state.shifts.forEach((shf) => {
+        if (shf.is_green_box_protected) {
+          protectedCount++;
+        } else if (shf.cmp_3day_cleared) {
+          clearedCount++;
+        } else {
+          pendingCount++;
+        }
+
+        const tr = document.createElement('tr');
+        const shiftId = shf.shift_id;
+        const hrs = Number(shf.weekly_hours || 6.0).toFixed(1);
+        const isProtected = Boolean(shf.is_green_box_protected);
+        const isCleared = Boolean(shf.cmp_3day_cleared);
+
+        tr.innerHTML = `
+          <td class="tabular" style="font-weight:600;">${shiftId}</td>
+          <td>
+            <div style="font-weight:500;">${shf.store_name || shf.store_id}</div>
+            <div class="tabular" style="font-size:12px;color:var(--ink-muted);">${shf.store_id} · ${shf.department || 'Retail Mens/Womens'}</div>
+          </td>
+          <td class="tabular">${shf.day_of_week} · ${shf.start_time}–${shf.end_time}</td>
+          <td>
+            <div class="hours-stepper">
+              <button type="button" class="stepper-btn" data-step="-0.5" aria-label="Decrease hours by 0.5">−</button>
+              <input type="number" step="0.5" min="1.0" max="16.0" class="stepper-input" id="hrs-${shiftId}" value="${hrs}" aria-label="Weekly hours for ${shiftId}" />
+              <button type="button" class="stepper-btn" data-step="0.5" aria-label="Increase hours by 0.5">+</button>
+            </div>
+          </td>
+          <td>
+            <label class="switch-label" title="Protected colleague shifts require Central HR sign-off to unlock for transfers">
+              <input type="checkbox" class="switch-input" id="gb-${shiftId}" ${isProtected ? 'checked' : ''} />
+              <span class="badge-protected">${isProtected ? 'Protected colleague shift' : 'Standard transfer vacancy'}</span>
+            </label>
+          </td>
+          <td>
+            <label class="switch-label">
+              <input type="checkbox" class="switch-input" id="cmp-${shiftId}" ${isCleared ? 'checked' : ''} />
+              <span>${isCleared ? 'Cleared (3+ days)' : 'Awaiting 3-day check'}</span>
+            </label>
+          </td>
+          <td style="text-align:right;">
+            <button type="button" class="btn-row-save" data-shift-id="${shiftId}">Save update</button>
+          </td>
+        `;
+
+        // Wire +/- 0.5h stepper buttons
+        const hrsInput = tr.querySelector(`#hrs-${shiftId}`);
+        tr.querySelectorAll('.stepper-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const delta = parseFloat(btn.getAttribute('data-step'));
+            const nextVal = Math.max(0.5, Math.min(16.0, parseFloat(hrsInput.value || '6.0') + delta));
+            hrsInput.value = nextVal.toFixed(1);
+          });
+        });
+
+        // Wire Save update button
+        const saveBtn = tr.querySelector('.btn-row-save');
+        saveBtn.addEventListener('click', async () => {
+          saveBtn.disabled = true;
+          saveBtn.textContent = 'Saving...';
+          try {
+            const payload = {
+              actor_token: state.activeManagerId,
+              weekly_hours: parseFloat(hrsInput.value),
+              is_green_box_protected: tr.querySelector(`#gb-${shiftId}`).checked,
+              cmp_3day_cleared: tr.querySelector(`#cmp-${shiftId}`).checked,
+              note: `Updated via Store Manager roster UI by ${state.activeManagerId}`,
+            };
+            const resp = await fetch(`/api/shift/${shiftId}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            const data = await resp.json();
+            await refreshPortalState();
+            showRowFeedback(shiftId, data);
+          } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save update';
+          }
+        });
+
+        tbody.appendChild(tr);
+
+        // If this shift has an active quarantine warning in v_data_quality_warnings, render an inline alert row
+        const shiftWarnings = state.dqWarnings.filter((w) => w.entity_id === shiftId);
+        if (shiftWarnings.length > 0) {
+          const warnTr = document.createElement('tr');
+          const msg = shiftWarnings
+            .map((w) => `${w.issue_description || w.issue_summary || w.dq_reason || w.rule_id} (${w.request_id})`)
+            .join(' · ');
+          warnTr.innerHTML = `<td colspan="7" class="row-validation-msg">Held for People Team Review: ${msg} — Gold shift roster remains unchanged until HR resolves.</td>`;
+          tbody.appendChild(warnTr);
+        }
+      });
+
+      document.getElementById('mgrClearedCount').textContent = clearedCount;
+      document.getElementById('mgrPendingCount').textContent = pendingCount;
+      document.getElementById('mgrProtectedCount').textContent = protectedCount;
+    }
+
+    function showRowFeedback(shiftId, result) {
+      const tbody = document.getElementById('managerRosterBody');
+      const bannerRow = document.createElement('tr');
+      if (result.promotion_status === 'PROMOTED') {
+        bannerRow.innerHTML = `<td colspan="7" class="row-validation-msg is-ok">Shift ${shiftId} updated and promoted to Gold roster (${result.request_id}).</td>`;
+      } else {
+        bannerRow.innerHTML = `<td colspan="7" class="row-validation-msg">Update on ${shiftId} held in Staging Quarantine (${result.request_id} · Rules: ${(result.dq_rules_triggered || []).join(', ')}).</td>`;
+      }
+      tbody.prepend(bannerRow);
+    }
+
+    function updateTopBarContext() {
+      const label = document.getElementById('activeContextLabel');
+      const stuWorkspace = document.getElementById('studentWorkspace');
+      const mgrWorkspace = document.getElementById('managerWorkspace');
+
+      if (state.persona === 'student') {
+        stuWorkspace.hidden = false;
+        mgrWorkspace.hidden = true;
+        const stu = state.students.find((s) => s.student_id === state.activeStudentId);
+        const homeStore = stu ? (stu.home_store_id || stu.current_store_id || 'STORE-104') : 'STORE-104';
+        const ageTag = stu && stu.age_band === 'UNDER_18' ? 'Under 18' : '18+';
+        label.textContent = `${state.activeStudentId} (${ageTag}) · Home Store ${homeStore}`;
+      } else {
+        stuWorkspace.hidden = true;
+        mgrWorkspace.hidden = false;
+        const storeTag = state.activeManagerId === 'SM-019' ? 'STORE-019 Leeds Trinity' : 'STORE-042 Nottingham Victoria';
+        label.textContent = `${state.activeManagerId} · Store Manager · ${storeTag}`;
+      }
+
+      // Sync presenter segmented buttons
+      document.querySelectorAll('.presenter-segmented button').forEach((btn) => {
+        const p = btn.getAttribute('data-persona');
+        const a = btn.getAttribute('data-actor');
+        const active =
+          (p === 'student' && state.persona === 'student' && a === state.activeStudentId) ||
+          (p === 'manager' && state.persona === 'manager' && a === state.activeManagerId);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    }
+
+    function updatePresenterTelemetry() {
+      const dock = document.getElementById('presenterDock');
+      dock.hidden = !state.demoMode;
+
+      const dot = document.getElementById('presenterStatusDot');
+      const tel = document.getElementById('presenterTelemetry');
+      const qCount = state.dqWarnings.length;
+
+      if (qCount > 0) {
+        dot.classList.add('has-quarantine');
+      } else {
+        dot.classList.remove('has-quarantine');
+      }
+
+      const latestJob =
+        (state.dataplexScan &&
+          (state.dataplexScan.latest_job_state ||
+            (state.dataplexScan.latest_completed_job && state.dataplexScan.latest_completed_job.state) ||
+            state.dataplexScan.status)) ||
+        'ACTIVE';
+      tel.textContent = `Quarantined alerts: ${qCount} · Staging requests: ${state.portalRequests.length} · Dataplex scan: ${latestJob}`;
+    }
+
+    async function refreshPortalState() {
+      const resp = await fetch('/api/state');
+      const data = await resp.json();
+      state.demoMode = Boolean(data.demo_mode);
+      state.students = data.spotlight_students || [];
+      state.shifts = data.spotlight_shifts || [];
+      state.storeDirectory = data.store_directory || [];
+      state.dqWarnings = data.dq_warnings || [];
+      state.portalRequests = data.portal_change_requests || [];
+      state.dataplexScan = data.dataplex_scan || {};
+
+      updateTopBarContext();
+      renderStudentView();
+      renderManagerView();
+      updatePresenterTelemetry();
+    }
+
+    async function triggerScenario(scenarioId) {
+      const tel = document.getElementById('presenterTelemetry');
+      tel.textContent = `Running ${scenarioId} + triggering Dataplex scan...`;
+      const resp = await fetch(`/api/demo-scenario/${scenarioId}`, { method: 'POST' });
+      const res = await resp.json();
+
+      // Switch view automatically to match the scenario story
+      if (scenarioId === 'SCENARIO_1_VALID_CLEARANCE') {
+        state.persona = 'manager';
+        state.activeManagerId = 'SM-019';
+      } else if (scenarioId === 'SCENARIO_2_STUDENT_DQ_VIOLATION') {
+        state.persona = 'student';
+        state.activeStudentId = 'STU-0412';
+      } else if (scenarioId === 'SCENARIO_3_MANAGER_DQ_VIOLATION') {
+        state.persona = 'manager';
+        state.activeManagerId = 'SM-042';
+      }
+
+      await refreshPortalState();
+      tel.textContent = `${res.summary || scenarioId} · Quarantined: ${state.dqWarnings.length}`;
+      return res;
+    }
+
+    // =========================================================================
+    // Event Listeners
+    // =========================================================================
+    document.getElementById('lastHomeShiftDate').addEventListener('change', calculateContinuityGap);
+    document.getElementById('firstUniShiftDate').addEventListener('change', calculateContinuityGap);
+    document.getElementById('latestFinishSelect').addEventListener('change', checkCurfewHint);
+    ['choice1Select', 'choice2Select', 'choice3Select'].forEach((id) => {
+      document.getElementById(id).addEventListener('change', renderStoreDirectory);
+    });
+
+    // City filter buttons
+    document.querySelectorAll('.city-pill').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.cityFilter = btn.getAttribute('data-city');
+        document.querySelectorAll('.city-pill').forEach((b) =>
+          b.setAttribute('aria-pressed', b === btn ? 'true' : 'false')
+        );
+        renderStoreDirectory();
+      });
+    });
+
+    // Student form submission
+    document.getElementById('studentTransferForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('saveStudentBtn');
+      const banner = document.getElementById('studentFeedbackBanner');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving preferences...';
+
+      try {
+        const gapDays = calculateContinuityGap();
+        const payload = {
+          actor_token: state.activeStudentId,
+          choice_1_store_id: document.getElementById('choice1Select').value,
+          choice_2_store_id: document.getElementById('choice2Select').value,
+          choice_3_store_id: document.getElementById('choice3Select').value,
+          preferred_transfer_date: document.getElementById('firstUniShiftDate').value,
+          transfer_gap_days: gapDays,
+          preferred_latest_finish: document.getElementById('latestFinishSelect').value,
+          available_days: document.getElementById('availableDaysSelect').value,
+          note: `Submitted via Colleague Store Transfers UI by ${state.activeStudentId}`,
+        };
+
+        const resp = await fetch(`/api/student/${state.activeStudentId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const res = await resp.json();
+        await refreshPortalState();
+
+        if (res.promotion_status === 'PROMOTED') {
+          banner.className = 'status-banner is-visible is-ok';
+          banner.textContent = `Preferences saved (${res.request_id}) — Promoted to Gold transfer roster and ready for 3-pass matching.`;
+        } else {
+          banner.className = 'status-banner is-visible is-err';
+          banner.textContent = `Held for People Team Review (${res.request_id}) — Policy rules triggered (${(res.dq_rules_triggered || []).join(', ')}). Your trusted Gold record remains untouched until HR reviews.`;
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save transfer preferences';
+      }
+    });
+
+    // Presenter Stage Dock Toggle & Persona / Scenario buttons
+    const presenterDock = document.getElementById('presenterDock');
+    const presenterPanel = document.getElementById('presenterPanel');
+    function togglePresenterDock() {
+      const isOpen = presenterDock.getAttribute('data-open') === 'true';
+      presenterDock.setAttribute('data-open', isOpen ? 'false' : 'true');
+      presenterPanel.hidden = isOpen;
+    }
+
+    document.getElementById('presenterToggle').addEventListener('click', togglePresenterDock);
+
+    document.querySelectorAll('.presenter-segmented button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.persona = btn.getAttribute('data-persona');
+        const actor = btn.getAttribute('data-actor');
+        if (state.persona === 'student') {
+          state.activeStudentId = actor;
+        } else {
+          state.activeManagerId = actor;
+        }
+        document.getElementById('studentFeedbackBanner').className = 'status-banner';
+        updateTopBarContext();
+        renderStudentView();
+        renderManagerView();
+      });
+    });
+
+    document.querySelectorAll('.scenario-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        triggerScenario(btn.getAttribute('data-scenario'));
+      });
+    });
+
+    // Keyboard shortcuts (` to toggle dock, 1/2/3/R to fire scenarios when not typing in an input)
+    window.addEventListener('keydown', (e) => {
+      if (!state.demoMode) return;
+      const tag = (document.activeElement && document.activeElement.tagName) || '';
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(tag)) return;
+
+      if (e.key === '`') {
+        e.preventDefault();
+        togglePresenterDock();
+      } else if (e.key === '1') {
+        e.preventDefault();
+        triggerScenario('SCENARIO_1_VALID_CLEARANCE');
+      } else if (e.key === '2') {
+        e.preventDefault();
+        triggerScenario('SCENARIO_2_STUDENT_DQ_VIOLATION');
+      } else if (e.key === '3') {
+        e.preventDefault();
+        triggerScenario('SCENARIO_3_MANAGER_DQ_VIOLATION');
+      } else if (e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        triggerScenario('SCENARIO_4_RESET');
+      }
+    });
+
+    // Initial load + optional query-driven demo runner (?scenario=... or ?autotest=all)
+    async function bootstrapPortal() {
+      populateStoreSelects();
+      await refreshPortalState();
+      if (!state.demoMode) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const scenarioParam = params.get('scenario');
+      const autotestParam = params.get('autotest');
+
+      if (scenarioParam) {
+        presenterDock.setAttribute('data-open', 'true');
+        presenterPanel.hidden = false;
+        await triggerScenario(scenarioParam);
+        document.title = `NEXT — [${scenarioParam} OK · Q=${state.dqWarnings.length}]`;
+      } else if (autotestParam === 'all') {
+        try {
+          presenterDock.setAttribute('data-open', 'true');
+          presenterPanel.hidden = false;
+          await triggerScenario('SCENARIO_4_RESET');
+          // Test manual Student update
+          const stuResp = await fetch('/api/student/STU-0412', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              actor_token: 'STU-0412',
+              choice_1_store_id: 'STORE-042',
+              choice_2_store_id: 'STORE-043',
+              choice_3_store_id: 'STORE-019',
+              preferred_transfer_date: '2026-09-27',
+              transfer_gap_days: 14,
+              preferred_latest_finish: '21:30',
+              available_days: 'Sat,Sun',
+              note: 'Autotest valid student preference save',
+            }),
+          });
+          if (!stuResp.ok) throw new Error('Student POST failed: ' + stuResp.status);
+          // Test manual Store Manager shift update
+          const shfResp = await fetch('/api/shift/SHF-9001', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              actor_token: 'SM-019',
+              weekly_hours: 6.0,
+              is_green_box_protected: false,
+              cmp_3day_cleared: true,
+              note: 'Autotest valid Store Manager shift update',
+            }),
+          });
+          if (!shfResp.ok) throw new Error('Shift POST failed: ' + shfResp.status);
+          // Test Scenario 1, 2, 3 in sequence so staging has the 4 quarantined DQ warnings ready for Gemini Enterprise
+          await triggerScenario('SCENARIO_1_VALID_CLEARANCE');
+          await triggerScenario('SCENARIO_2_STUDENT_DQ_VIOLATION');
+          await triggerScenario('SCENARIO_3_MANAGER_DQ_VIOLATION');
+          document.title = `NEXT — [AUTOTEST PASS · Q=${state.dqWarnings.length}]`;
+        } catch (err) {
+          document.title = `NEXT — [AUTOTEST ERR: ${err.message}]`;
+        }
+      }
+    }
+
+    bootstrapPortal();
+  </script>
+</body>
+</html>
