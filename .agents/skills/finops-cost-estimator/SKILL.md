@@ -16,4 +16,4 @@ Use this skill after authoring the solution design or agent runtime code to veri
    - Verify Cloud Run deploy flags include `--min-instances=0 --max-instances=2 --cpu-throttling`.
 4. **Output FinOps Table (Append to `docs/02-solution-design/03-waf-review.md` or `IT_HANDOVER_BUNDLE/FINOPS_SUMMARY.md`):**
    - Compare **Anti-Pattern (`Row-by-Row LLM`: `1,050 students x 3 choices = 3,150 LLM calls/run`)** vs **Hybrid Architecture (`Python Matcher = $0.00` + `Gemini 2.5 Flash Summary/Q&A = <$0.05/batch`, `<$5/month` total)**.
-   - Show coverage under Gemini Enterprise's pooled developer quota (**`$15/seat/month`**) and enterprise token governance via Apigee `LLMTokenQuota` (https://docs.cloud.google.com/apigee/docs/api-platform/reference/policies/llm-token-quota-policy).
+   - Show coverage under Gemini Enterprise's pooled developer quota (**`$15/seat/month`**), ADK `max_output_tokens <= 1024`, and Cloud Run `--max-instances=2` concurrency bounds.

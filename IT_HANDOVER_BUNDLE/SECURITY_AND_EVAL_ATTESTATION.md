@@ -23,7 +23,7 @@
 | **`pytest` Deterministic Rule Invariants (`tests/test_matcher.py`)** | `100% (14/14)` | **`100.0% (14/14 passed)`** | **PASS** |
 | **50-Case Golden Eval Trajectory Precision (`tests/eval_golden_set.json`)** | `>= 0.95` | **`1.0000 (50/50 exact)`** | **PASS** |
 | **50-Case Golden Eval Groundedness (Zero Hallucinated IDs/Hours)** | `>= 0.98` | **`1.0000 (50/50 grounded)`** | **PASS** |
-| **Regional Model Armor (`europe-west2`) & DLP Intercept Rate** | `1.00` | **`1.0000 (100% blocked)`** | **PASS** |
+| **Regional Model Armor (`europe-west2` PI + SDP Filter) Intercept Rate** | `1.00` | **`1.0000 (100% blocked)`** | **PASS** |
 | **UK Under-18 Statutory Breach Count (`<06:00`, `>22:00`, `>8h/d`, `>40h/w`)** | `0` | **`0 Breaches`** | **PASS** |
 | **Green Box Protected & Un-Cleared 3-Day CMP Shift Leakage** | `0` | **`0 Leaked Shifts`** | **PASS** |
 | **Stage 1 $\rightarrow$ Stage 2 Autonomy Graduation Readiness** | `>= 98.0%` across `>= 500` placements | **`99.64%` (`553` complete placements)** | **READY FOR STAGE 2 SIGN-OFF** |

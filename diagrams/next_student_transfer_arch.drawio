@@ -32,7 +32,7 @@
         <mxCell id="cell_10" value="&lt;b&gt;[VertexAI] Gemini Enterprise&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;@StudentTransfer App&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#1a73e8;strokeWidth=2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_3">
           <mxGeometry x="281.00000000000006" y="53.69999999999999" width="208" height="64" as="geometry" />
         </mxCell>
-        <mxCell id="cell_11" value="&lt;b&gt;[Laptop] HR Control Tower&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Match &amp; Exception UI&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#1a73e8;strokeWidth=2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_3">
+        <mxCell id="cell_11" value="&lt;b&gt;[CloudRun] Self-Service Portal&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Cloud LB + Cloud IAP&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#1a73e8;strokeWidth=2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_3">
           <mxGeometry x="513" y="53.69999999999999" width="208" height="64" as="geometry" />
         </mxCell>
         <mxCell id="cell_12" value="&lt;b&gt;[GoogleWorkspace] 470 Store Managers&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Phase 2 Shift Agent&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_3">
@@ -44,7 +44,7 @@
         <mxCell id="cell_14" value="&lt;b&gt;[IAM] Private IAM &amp; SSO&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Invoker Least-Priv&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_5">
           <mxGeometry x="0" y="0" width="178" height="71.4" as="geometry" />
         </mxCell>
-        <mxCell id="cell_15" value="&lt;b&gt;[Apigee] FinOps &amp; Token Cap&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Scale-to-0 • Apigee&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_5">
+        <mxCell id="cell_15" value="&lt;b&gt;[CloudRun] FinOps &amp; Token Cap&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Scale-to-0 • 1024 Cap&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_5">
           <mxGeometry x="191.99999999999997" y="0" width="178" height="71.4" as="geometry" />
         </mxCell>
         <mxCell id="cell_16" value="&lt;b&gt;[VertexAI] ADK Orchestrator&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Gemini 2.5 Flash&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#1a73e8;strokeWidth=2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_6">
@@ -56,7 +56,7 @@
         <mxCell id="cell_18" value="&lt;b&gt;[CloudRun] Deterministic Matcher&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;3-Pass • 5.5h • CMP • &lt;18&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_7">
           <mxGeometry x="18" y="90" width="214" height="71.4" as="geometry" />
         </mxCell>
-        <mxCell id="cell_19" value="&lt;b&gt;[CloudMonitoring] Gen AI Evaluation&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Trajectory &amp; Grounding&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_8">
+        <mxCell id="cell_19" value="&lt;b&gt;[VertexAI] Golden Eval Suite&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Trajectory &amp; Grounding&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_8">
           <mxGeometry x="16.000000000000057" y="50" width="184" height="85.7" as="geometry" />
         </mxCell>
         <mxCell id="cell_20" value="&lt;b&gt;[CloudAuditLogs] transfer_audit_log&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;Decisions &amp; Overrides&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_8">
@@ -68,7 +68,7 @@
         <mxCell id="cell_22" value="&lt;b&gt;[BigQuery] store_shifts_gold&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;470 Stores • CMP • Green&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_8">
           <mxGeometry x="608" y="58.77499999999998" width="184" height="68.15" as="geometry" />
         </mxCell>
-        <mxCell id="cell_23" value="&lt;b&gt;[CloudStorage] NEP &#39;Do Not Post&#39;&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;HITL Staged Batch&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_8">
+        <mxCell id="cell_23" value="&lt;b&gt;[BigQuery] placements_staging&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#64748B&#39; size=&#39;1&#39;&gt;HITL Staged Batch&lt;/font&gt;" style="rounded=1;arcSize=15;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dadce0;strokeWidth=1.2;fontColor=#202124;fontSize=13;shadow=1;" vertex="1" parent="cell_8">
           <mxGeometry x="808" y="57.14999999999998" width="178" height="71.4" as="geometry" />
         </mxCell>
         <mxCell id="edge_24" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1a73e8;strokeWidth=2;fontColor=#334155;fontSize=11;endArrow=block;endFill=1;" edge="1" parent="1" source="cell_9" target="cell_10">
